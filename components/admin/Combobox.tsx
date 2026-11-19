@@ -5,8 +5,10 @@ import { ChevronDown, Search, X } from 'lucide-react';
 export type ComboOption = { value: string; label: string; hint?: string; search?: string };
 
 /** One field that is both a dropdown and a search box: type to filter, arrow keys + Enter to pick, Esc to close. */
-export default function Combobox({ options, value, onChange, placeholder = 'พิมพ์เพื่อค้นหา หรือเลือกจากรายการ…', disabled, resetOnSelect, ariaLabel, className = '' }: {
+export default function Combobox({ options, value, onChange, placeholder = 'พิมพ์เพื่อค้นหา หรือเลือกจากรายการ…', disabled, resetOnSelect, ariaLabel, className = '', allowCustom }: {
   options: ComboOption[]; value: string; onChange: (v: string) => void; placeholder?: string; disabled?: boolean; resetOnSelect?: boolean; ariaLabel?: string; className?: string;
+  /** Free-hand mode: the typed text itself can be used as the value, even if it is not in the list. */
+  allowCustom?: boolean;
 }) {
   const uid = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -14,19 +16,23 @@ export default function Combobox({ options, value, onChange, placeholder = 'พ�
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
   const selected = options.find(o => o.value === value);
+  const qRef = useRef(q); qRef.current = q;
+  const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
 
+  const typed = q.trim();
   const shown = useMemo(() => {
     const t = q.toLowerCase().trim();
-    if (!t) return options;
-    return options.filter(o => `${o.label} ${o.hint ?? ''} ${o.search ?? ''}`.toLowerCase().includes(t));
-  }, [options, q]);
+    const list = t ? options.filter(o => `${o.label} ${o.hint ?? ''} ${o.search ?? ''}`.toLowerCase().includes(t)) : options;
+    if (allowCustom && t && !options.some(o => o.label.toLowerCase() === t)) return [...list, { value: q.trim(), label: `+ ใช้ “${q.trim()}” (พิมพ์เอง)`, hint: 'ไม่ต้องมีในรายการ' }];
+    return list;
+  }, [options, q, allowCustom]);
 
   useEffect(() => { setActive(0); }, [q, open]);
   useEffect(() => {
-    const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) { setOpen(false); setQ(''); } };
+    const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) { setOpen(false); if (allowCustom && !resetOnSelect && qRef.current.trim()) onChangeRef.current(qRef.current.trim()); setQ(''); } };
     document.addEventListener('mousedown', away);
     return () => document.removeEventListener('mousedown', away);
-  }, []);
+  }, [allowCustom]);
   useEffect(() => { if (open) document.getElementById(`${uid}-o${active}`)?.scrollIntoView({ block: 'nearest' }); }, [active, open, uid]);
 
   const pick = (o: ComboOption) => { onChange(o.value); setQ(''); setOpen(false); };
@@ -35,9 +41,9 @@ export default function Combobox({ options, value, onChange, placeholder = 'พ�
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(0, a - 1)); }
     else if (e.key === 'Enter') { if (open && shown[active]) { e.preventDefault(); pick(shown[active]); } }
     else if (e.key === 'Escape') { setOpen(false); setQ(''); }
-    else if (e.key === 'Tab') { setOpen(false); setQ(''); }
+    else if (e.key === 'Tab') { setOpen(false); if (allowCustom && !resetOnSelect && typed) onChange(typed); setQ(''); }
   };
-  const display = open ? q : (resetOnSelect ? '' : selected?.label ?? '');
+  const display = open ? q : (resetOnSelect ? '' : selected?.label ?? (allowCustom ? value : ''));
 
   return (
     <div ref={root} className={`relative ${className}`}>
@@ -45,7 +51,7 @@ export default function Combobox({ options, value, onChange, placeholder = 'พ�
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden />
         <input
           role="combobox" aria-expanded={open} aria-controls={`${uid}-list`} aria-autocomplete="list" aria-label={ariaLabel} aria-activedescendant={open && shown[active] ? `${uid}-o${active}` : undefined}
-          disabled={disabled} value={display} placeholder={selected && !resetOnSelect ? selected.label : placeholder} autoComplete="off"
+          disabled={disabled} value={display} placeholder={(selected || (allowCustom && value)) && !resetOnSelect ? (selected?.label ?? value) : placeholder} autoComplete="off"
           onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onChange={e => { setQ(e.target.value); setOpen(true); }} onKeyDown={onKey}
           className="w-full pl-9 pr-16 py-2.5 border rounded-xl text-[14px] bg-white disabled:bg-gray-100 placeholder:text-gray-400"
         />

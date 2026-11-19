@@ -101,7 +101,7 @@ export default function EquipmentSets({ catalog, canEdit }: { catalog: CatalogRo
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Combobox className="min-w-[280px] flex-1 sm:flex-none sm:w-[340px]" ariaLabel="เพิ่มจากรายการอุปกรณ์" resetOnSelect value={pick} onChange={addFromCatalog} placeholder="+ ค้นหา/เลือกอุปกรณ์เพื่อเพิ่มในเซ็ต" options={catalog.map(c => ({ value: c.name, label: c.name, hint: baht(c.price), search: `${c.code} ${c.category}` }))} />
+            <Combobox allowCustom className="min-w-[280px] flex-1 sm:flex-none sm:w-[340px]" ariaLabel="เพิ่มจากรายการอุปกรณ์" resetOnSelect value={pick} onChange={addFromCatalog} placeholder="+ ค้นหา/เลือก หรือพิมพ์ชื่ออุปกรณ์เองเพื่อเพิ่มในเซ็ต" options={catalog.map(c => ({ value: c.name, label: c.name, hint: baht(c.price), search: `${c.code} ${c.category}` }))} />
             <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { name: '', qty: 1, price: 0, discount: 0, details: [] }] })} className="px-3 py-2 rounded-xl border bg-white text-[13px] font-semibold hover:bg-gray-50">+ เพิ่มรายการเอง</button>
             <div className="ml-auto text-[14px]">รวมเซ็ต <b className="text-[17px]">{baht(total)}</b> <span className="text-[11px] text-[var(--muted)]">(ก่อน VAT)</span></div>
           </div>
