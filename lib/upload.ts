@@ -13,6 +13,14 @@ async function shrink(file: File, maxSide = 1600, quality = 0.82): Promise<Blob>
   } catch { return file; }
 }
 
+/** Upload a PDF (quotation attachment) as-is to Vercel Blob. Returns the public URL. */
+export async function uploadPdf(file: File): Promise<string> {
+  if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) throw new Error('รองรับเฉพาะไฟล์ PDF');
+  if (file.size > 25 * 1024 * 1024) throw new Error('ไฟล์ใหญ่เกิน 25MB');
+  const res = await upload(`attachments/${Date.now()}-${file.name.replace(/[^\w.\-ก-๙]+/g, '_')}`, file, { access: 'public', handleUploadUrl: '/api/upload', contentType: 'application/pdf' });
+  return res.url;
+}
+
 export async function uploadImage(file: File, folder: 'photos' | 'slips' | 'news'): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('รองรับเฉพาะไฟล์รูปภาพ');
   const body = await shrink(file);

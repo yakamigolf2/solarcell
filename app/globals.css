@@ -40,6 +40,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)!important;box-s
 .kanban-scroll::-webkit-scrollbar{height:8px}
 .kanban-scroll::-webkit-scrollbar-thumb{background:#93C5FD;border-radius:99px}
 
+/* Mini scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.45) transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(100,116,139,.45);border-radius:99px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(100,116,139,.7)}
+aside.glass-dark{scrollbar-color:rgba(255,255,255,.35) transparent}
+aside.glass-dark::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)}
+
 /* Soft glass surfaces: every card in the backoffice that uses the surface token */
 [class*="bg-[var(--surface)]"]{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .rounded-3xl[class*="bg-[var(--surface)]"]{box-shadow:var(--shadow-soft);border-color:rgba(255,255,255,.7)}
