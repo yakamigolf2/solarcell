@@ -5,7 +5,7 @@ import { can, getSessionUser } from '@/lib/auth';
 // Browser uploads straight to Vercel Blob (bypasses the 4.5MB function body limit); this route only issues short-lived tokens.
 export async function POST(req: Request) {
   const user = await getSessionUser();
-  if (!user || !can(user, 'photos_upload', 'finance_edit_installments')) return NextResponse.json({ error: 'ไม่มีสิทธิ์อัปโหลด' }, { status: 403 });
+  if (!user || !can(user, 'photos_upload', 'finance_edit_installments', 'news_manage', 'projects_manage')) return NextResponse.json({ error: 'ไม่มีสิทธิ์อัปโหลด' }, { status: 403 });
   try {
     const body = (await req.json()) as HandleUploadBody;
     const json = await handleUpload({

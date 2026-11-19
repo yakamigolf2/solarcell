@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
+import NewsCard from '@/components/site/NewsCard';
 import { RevealItem, SectionTitle, Stagger } from '@/components/site/Reveal';
-import { NEWS } from '@/lib/site-data';
+import { getPublishedNews } from '@/lib/news';
 
 export const metadata: Metadata = { title: 'ข่าวสารและบทความ' };
+export const dynamic = 'force-dynamic';
 
-export default function News() {
+export default async function News() {
+  const items = await getPublishedNews();
   return (
-    <div className="max-w-[900px] mx-auto px-5 pt-16">
+    <div className="max-w-[1100px] mx-auto px-5 pt-16">
       <SectionTitle eyebrow="News & articles" title="ข่าวสารและบทความ" text="ความรู้เรื่องโซลาร์เซลล์ การประหยัดพลังงาน และการดูแลระบบ" />
-      <Stagger className="space-y-4">
-        {NEWS.map(n => <RevealItem key={n.id}><article className="lift glass rounded-[28px] p-6"><div className="flex justify-between text-[12px]"><span className="font-semibold text-[var(--emerald)]">{n.tag}</span><time className="text-[var(--muted)]">{n.date}</time></div><h2 className="mt-2 font-bold text-[20px] text-[var(--navy)]">{n.title}</h2><p className="mt-2 text-[15px] text-[var(--muted)] leading-relaxed">{n.text}</p></article></RevealItem>)}
-      </Stagger>
+      {items.length === 0 ? <p className="glass rounded-3xl p-10 text-center text-[var(--muted)]">ยังไม่มีข่าวสาร</p> :
+        <Stagger className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{items.map(n => <RevealItem key={n.id}><NewsCard n={n} /></RevealItem>)}</Stagger>}
     </div>
   );
 }

@@ -13,7 +13,7 @@ async function shrink(file: File, maxSide = 1600, quality = 0.82): Promise<Blob>
   } catch { return file; }
 }
 
-export async function uploadImage(file: File, folder: 'photos' | 'slips'): Promise<string> {
+export async function uploadImage(file: File, folder: 'photos' | 'slips' | 'news'): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('รองรับเฉพาะไฟล์รูปภาพ');
   const body = await shrink(file);
   const ext = body.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'png').toLowerCase();

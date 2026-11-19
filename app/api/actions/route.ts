@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import { and, asc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getDb, schema } from '@/db';
+import { NEWS_COLLECTION } from '@/lib/news';
+import { PROJECTS_COLLECTION } from '@/lib/projects';
 import { can, COMPANY, getSessionUser, JOBS, type SessionUser, USERS } from '@/lib/auth';
 
 const r = schema.records;
@@ -22,6 +24,8 @@ function authorize(user: SessionUser, action: string, collection: string) {
     return can(user, ...JOB_WRITE);
   }
   if (collection === USERS) return isWrite ? can(user, 'users_manage') : can(user, 'users_view', 'users_manage');
+  if (collection === NEWS_COLLECTION) return can(user, 'news_manage');
+  if (collection === PROJECTS_COLLECTION) return can(user, 'projects_manage');
   if (collection === COMPANY) return isWrite ? can(user, 'settings_edit') : true;
   return false;
 }

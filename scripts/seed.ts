@@ -23,6 +23,29 @@ async function main() {
     for (let i = 0; i < SAMPLES.length; i++) await db.insert(records).values({ collection: 'solarpro_jobs', value: SAMPLES[i], idempotencyKey: `seed-job-${i}` }).onConflictDoNothing();
     console.log(`jobs + ${SAMPLES.length}`);
   }
+  const news = await db.select().from(records).where(eq(records.collection, 'bge_news'));
+  if (news.length === 0) {
+    const SAMPLE = [
+      { date: '2026-11-12', tag: 'ความรู้', title: 'ติดตั้งโซลาร์รูฟท็อปต้องเตรียมอะไรบ้าง', summary: 'เช็กลิสต์ก่อนติดตั้ง ตั้งแต่โครงสร้างหลังคา ทิศทาง ไปจนถึงมิเตอร์และเอกสาร' },
+      { date: '2026-11-03', tag: 'คู่มือ', title: 'ขนาดระบบแค่ไหนจึงเหมาะกับค่าไฟของคุณ', summary: 'วิธีประเมินขนาดระบบคร่าว ๆ จากบิลค่าไฟรายเดือน และสิ่งที่ควรถามผู้ติดตั้ง' },
+      { date: '2026-10-21', tag: 'บำรุงรักษา', title: 'ดูแลแผงโซลาร์ให้ผลิตไฟได้เต็มประสิทธิภาพ', summary: 'การล้างแผง ตรวจสายไฟ และสัญญาณเตือนที่ควรให้ช่างมาตรวจสอบ' },
+    ];
+    for (let i = 0; i < SAMPLE.length; i++) await db.insert(records).values({ collection: 'bge_news', value: { ...SAMPLE[i], body: SAMPLE[i].summary, cover: '', status: 'เผยแพร่' }, idempotencyKey: `seed-news-${i}` }).onConflictDoNothing();
+    console.log('news + 3');
+  }
+  const proj = await db.select().from(records).where(eq(records.collection, 'bge_projects'));
+  if (proj.length === 0) {
+    const P = [
+      ['ติดตั้ง Solar บ้านพักอาศัย 5.8 kWp', 'ปทุมธานี', 'บ้านพักอาศัย', 5.8, 'ระบบ On-grid สำหรับบ้านสองชั้น ลดค่าไฟช่วงกลางวันที่ใช้เครื่องปรับอากาศ'],
+      ['โซลาร์รูฟท็อปอาคารสำนักงาน 30 kWp', 'นนทบุรี', 'อาคารพาณิชย์', 30, 'ติดตั้งบนดาดฟ้าอาคาร พร้อมระบบมอนิเตอร์ผลผลิตแบบเรียลไทม์'],
+      ['ระบบโซลาร์โรงงานพลาสติก 99 kWp', 'สมุทรปราการ', 'โรงงาน', 99, 'ลดต้นทุนพลังงานในช่วงเวลาผลิต ออกแบบโครงสร้างรองรับหลังคาเมทัลชีท'],
+      ['Solar บ้านในหมู่บ้านจัดสรร 4.4 kWp', 'กรุงเทพฯ', 'บ้านพักอาศัย', 4.4, 'จัดวางแผงให้กลมกลืนกับหลังคา คำนึงถึงทิศและร่มเงา'],
+      ['โซลาร์ร้านค้าและโกดัง 15 kWp', 'ปทุมธานี', 'อาคารพาณิชย์', 15, 'ระบบขนาดกลางสำหรับธุรกิจที่เปิดทำการช่วงกลางวัน'],
+      ['ระบบโซลาร์โรงงานอะไหล่ 60 kWp', 'ปทุมธานี', 'โรงงาน', 60, 'วิศวกรออกแบบตามโหลดไฟฟ้าและพื้นที่หลังคาจริง'],
+    ] as const;
+    for (let i = P.length - 1; i >= 0; i--) { const [title, place, type, kw, text] = P[i]; await db.insert(records).values({ collection: 'bge_projects', value: { title, place, type, kw, text, cover: '', status: 'เผยแพร่' }, idempotencyKey: `seed-project-${i}` }).onConflictDoNothing(); }
+    console.log('projects + 6');
+  }
   console.log('seed done');
 }
 main().catch((e) => { console.error(e); process.exit(1); });
