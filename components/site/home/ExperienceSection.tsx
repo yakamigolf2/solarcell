@@ -45,12 +45,12 @@ export default function ExperienceSection() {
               <div className="mt-2 h-1 w-14 rounded-full bg-[var(--energy)]" aria-hidden />
               <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--muted)]">{sc.summary}</p>
             </div>
-            <ul className="flex flex-wrap gap-2.5">
+            <ul className="relative z-10 flex flex-wrap gap-2.5">
               {sc.benefits.map((b, i) => { const Icon = BENEFIT_ICON[i % 3]; return <li key={b} className="flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-[12.5px] font-medium text-[var(--navy)] shadow-sm max-w-[220px]"><Icon size={18} className="text-[var(--emerald)] shrink-0" /><span className="leading-snug">{b}</span></li>; })}
             </ul>
           </div>
 
-          <div className="relative mt-3">
+          <div className="relative z-0 mt-3 overflow-hidden rounded-2xl">
             <IsoScene scenario={scenario} selected={part} onSelect={pick} interactive className="w-full h-auto" />
             {/* callout chips (desktop) */}
             <div className="hidden md:block">

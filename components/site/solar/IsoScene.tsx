@@ -52,7 +52,7 @@ export const SCENARIO_FLOWS: Record<Scenario, string[]> = {
 export function partAnchor(p: PartId): { left: string; top: string } {
   const at: Record<PartId, P3> = { solar: [2.6, 1.6, 3.5], inverter: [4.3, 4.3, 1.7], battery: [5.1, 3.6, 1.45], home: [1.8, 5.1, 1.7], grid: [7.55, 0.5, 3.4] };
   const [x, y] = pt(at[p]);
-  return { left: `${(x / 560 * 100).toFixed(1)}%`, top: `${(y / 450 * 100).toFixed(1)}%` };
+  return { left: `${(x / 560 * 100).toFixed(1)}%`, top: `${(y / 482 * 100).toFixed(1)}%` };
 }
 export const FLOW_LABELS = FLOWS;
 
@@ -75,10 +75,10 @@ export default function IsoScene({ scenario = 'hybrid', selected = null, onSelec
     const u0 = 0.14 + r * 0.38, u1 = u0 + 0.34, v0 = 0.07 + c * 0.225, v1 = v0 + 0.2;
     panels.push([slope(u0, v0), slope(u0, v1), slope(u1, v1), slope(u1, v0)]);
   }
-  const sunC = pt([-1.2, 2.2, 5.2]);
+  const sunC: [number, number] = [86, 78]; // fixed inside the viewBox so the glow never spills over content above the scene
 
   return (
-    <svg viewBox="0 0 560 450" className={className} role="img" aria-label={interactive ? 'ภาพจำลองระบบโซลาร์เซลล์บนบ้าน คลิกส่วนประกอบเพื่อดูรายละเอียด' : 'ภาพประกอบบ้านที่ติดตั้งโซลาร์เซลล์'} style={{ overflow: 'visible' }}>
+    <svg viewBox="0 0 560 482" className={className} role="img" aria-label={interactive ? 'ภาพจำลองระบบโซลาร์เซลล์บนบ้าน คลิกส่วนประกอบเพื่อดูรายละเอียด' : 'ภาพประกอบบ้านที่ติดตั้งโซลาร์เซลล์'}>
       <defs>
         <filter id={`glow${uid}`} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
         <radialGradient id={`sun${uid}`}><stop offset="0" stopColor="#FFE9A8" /><stop offset="1" stopColor="#E8BD65" stopOpacity="0" /></radialGradient>
@@ -88,7 +88,7 @@ export default function IsoScene({ scenario = 'hybrid', selected = null, onSelec
 
       {/* sun + beams */}
       <g aria-hidden>
-        <circle cx={sunC[0]} cy={sunC[1]} r="62" fill={`url(#sun${uid})`} />
+        <circle cx={sunC[0]} cy={sunC[1]} r="54" fill={`url(#sun${uid})`} />
         <circle cx={sunC[0]} cy={sunC[1]} r="21" fill={C.gold} />
         <g stroke={C.gold} strokeWidth="2.5" strokeLinecap="round" className="iso-rays">{Array.from({ length: 10 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return <line key={i} x1={(sunC[0] + Math.cos(a) * 30).toFixed(1)} y1={(sunC[1] + Math.sin(a) * 30).toFixed(1)} x2={(sunC[0] + Math.cos(a) * 40).toFixed(1)} y2={(sunC[1] + Math.sin(a) * 40).toFixed(1)} />; })}</g>
         <path d={`M${sunC[0] + 26} ${sunC[1] + 12} L${pt([2.6, 1.2, 3.2]).join(' ')}`} stroke={C.gold} strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" opacity=".8" />

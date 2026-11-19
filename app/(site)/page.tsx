@@ -17,7 +17,7 @@ import { COMPANY_STATS, FAQ, TRUST_FACTS } from '@/lib/solar-copy';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: { absolute: 'BGE SolarTech — Intelligent Solar Energy for Homes, Businesses and Industries' },
+  title: { absolute: 'BGE SolarTech | โซลาร์เซลล์ครบวงจร สำหรับบ้านและธุรกิจ' },
   description: 'ออกแบบ ติดตั้ง และดูแลระบบโซลาร์เซลล์ครบวงจร On-grid, Hybrid และ Off-grid สำหรับบ้าน อาคารพาณิชย์ และโรงงาน',
   openGraph: { title: 'BGE SolarTech — Intelligent Solar Energy', description: 'Smarter Solar Solutions for Homes, Businesses and Industries.', type: 'website', locale: 'th_TH', images: [{ url: '/hero-bg.jpg', width: 1679, height: 937, alt: 'บ้านที่ติดตั้งโซลาร์เซลล์' }] },
 };

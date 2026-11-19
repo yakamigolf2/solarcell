@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const note = clean(b.note, 1000);
     const value = {
       source: 'website', customer: name, phone, line: clean(b.line, 60), address: clean(b.address, 300), building: clean(b.building, 60) || 'บ้าน', bill,
-      status: 'ลีดใหม่', created: new Date().toISOString().slice(0, 10), customerNote: note ? `[จากเว็บไซต์] ${note}` : '[จากเว็บไซต์] ขอใบเสนอราคา',
+      items: [], labor: 0, discount: 0, contacts: [], noteHistory: [], sitePhotos: [], status: 'ลีดใหม่', created: new Date().toISOString().slice(0, 10), customerNote: note ? `[จากเว็บไซต์] ${note}` : '[จากเว็บไซต์] ขอใบเสนอราคา',
     };
     await getDb().insert(r).values({ collection: JOBS, value });
     return NextResponse.json({ data: { ok: true } });

@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'เกี่ยวกับเรา
 export default function About() {
   return (
     <div className="max-w-[1100px] mx-auto px-5 pt-16">
-      <SectionTitle eyebrow="About us" title={COMPANY.legal} text="เราให้บริการออกแบบ ติดตั้ง และดูแลระบบพลังงานแสงอาทิตย์ครบวงจร โดยเน้นการสำรวจหน้างานจริง ราคาโปร่งใส และการสื่อสารที่ชัดเจนตลอดโครงการ" />
+      <SectionTitle eyebrow="About us" as="h1" title={COMPANY.legal} text="เราให้บริการออกแบบ ติดตั้ง และดูแลระบบพลังงานแสงอาทิตย์ครบวงจร โดยเน้นการสำรวจหน้างานจริง ราคาโปร่งใส และการสื่อสารที่ชัดเจนตลอดโครงการ" />
       <Reveal className="glass rounded-[28px] p-6 sm:p-8 grid sm:grid-cols-2 gap-6 text-[14.5px]">
         <div><div className="text-[12px] text-[var(--muted)]">ชื่อบริษัท (อังกฤษ)</div><div className="font-semibold">{COMPANY.legalEn}</div></div>
         <div><div className="text-[12px] text-[var(--muted)]">เลขประจำตัวผู้เสียภาษี</div><div className="font-semibold">{COMPANY.taxId}</div></div>

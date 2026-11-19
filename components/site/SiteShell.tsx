@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { ArrowRight, Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 import { COMPANY, NAV } from '@/lib/site-data';
+import CyberTransition from './CyberTransition';
 
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -23,6 +24,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="site-theme relative min-h-screen overflow-x-clip">
+        <CyberTransition />
         <header className="sticky top-3 z-50 mx-3 sm:mx-6 lg:mx-auto lg:max-w-[1200px]">
           <div className="glass rounded-full px-4 sm:px-6 h-16 flex items-center gap-4">
             <Brand />
@@ -49,7 +51,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               <p className="mt-4 text-[14px] text-white/70 max-w-sm leading-relaxed">ออกแบบ ติดตั้ง และดูแลระบบ Solar Cell ครบวงจร สำหรับบ้าน อาคาร และโรงงาน</p>
               <p className="mt-3 text-[12px] text-white/50">{COMPANY.legal} • {COMPANY.legalEn}<br />เลขประจำตัวผู้เสียภาษี {COMPANY.taxId}</p>
             </div>
-            <div><h3 className="font-semibold mb-3">เมนู</h3><ul className="space-y-2 text-[14px] text-white/75">{NAV.map(n => <li key={n.href}><Link href={n.href} className="hover:text-white">{n.label}</Link></li>)}<li><Link href="/quote" className="hover:text-white">ขอใบเสนอราคา</Link></li></ul></div>
+            <div><h3 className="font-semibold mb-3">เมนู</h3><ul className="text-[14px] text-white/75">{NAV.map(n => <li key={n.href}><Link href={n.href} className="inline-block py-2 hover:text-white">{n.label}</Link></li>)}<li><Link href="/quote" className="inline-block py-2 hover:text-white">ขอใบเสนอราคา</Link></li></ul></div>
             <div><h3 className="font-semibold mb-3">ติดต่อเรา</h3><ul className="space-y-3 text-[14px] text-white/75">
               <li className="flex gap-2"><MapPin size={16} className="shrink-0 mt-0.5" />{COMPANY.address}</li>
               <li className="flex gap-2"><Phone size={16} className="shrink-0 mt-0.5" /><a href={COMPANY.phoneHref} className="hover:text-white">{COMPANY.phone}</a></li>

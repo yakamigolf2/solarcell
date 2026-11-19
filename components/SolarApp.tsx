@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, LayoutDashboard, Users, ClipboardList, FileText, Wallet, Zap, Settings, Menu, X, Phone, MapPin, Calendar, Eye, Pencil, Trash2, Sun, TrendingUp, Clock, AlertTriangle, CheckCircle2, Circle, Building2, Home, Factory, Briefcase, Save, Camera, Copy, ExternalLink, NotebookPen, LogOut, ShieldCheck, UserCog, Lock, KeyRound, User as UserIcon, Mail, Image as ImageIcon } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { MotionConfig, motion } from 'motion/react';
+import Combobox from '@/components/admin/Combobox';
 import EquipmentSets from '@/components/admin/EquipmentSets';
 import SetPicker from '@/components/admin/SetPicker';
 import ProductsAdmin from '@/components/admin/ProductsAdmin';
@@ -135,6 +136,13 @@ const PHOTO_CATEGORIES = ['หลังคา', 'แผง', 'Inverter', 'ตู
 function normalizeJob(v: any): Job {
   return safe(() => {
     const base = { ...(v || {}) } as Job;
+    // Records created elsewhere (e.g. the public quote form) may be partial: fill every missing field so no screen can crash on undefined.
+    const d = emptyJob() as any;
+    const b = base as any;
+    Object.keys(d).forEach(k => {
+      const wantArray = Array.isArray(d[k]);
+      if (b[k] === undefined || b[k] === null || (wantArray && !Array.isArray(b[k]))) b[k] = k === 'items' ? [] : k === 'labor' || k === 'discount' ? 0 : wantArray ? JSON.parse(JSON.stringify(d[k])) : d[k];
+    });
     if (!Array.isArray(base.sitePhotos)) base.sitePhotos = [];
     if (!Array.isArray(base.photoChecklist) || base.photoChecklist.length === 0) base.photoChecklist = defaultChecklist();
     if (typeof base.customerNote !== 'string') base.customerNote = '';
@@ -949,8 +957,9 @@ function QuoteEditor({ job, onChange, onOpenQuote, catalog, canEdit }: { job: Jo
     <div className="border rounded-2xl p-3 mb-3 bg-white"><div className="font-bold text-[14px] mb-2">หัวเอกสารใบเสนอราคา</div><div className="grid sm:grid-cols-2 gap-3"><div><label className={labelE}>เลขที่เอกสาร</label><input disabled={!canEdit} value={docE.docNo} onChange={e => onChange({ quoteDocNo: e.target.value })} className={inputE} /></div><div><label className={labelE}>วันที่ออก</label><input disabled={!canEdit} value={docE.issueDate} onChange={e => onChange({ quoteIssueDate: e.target.value })} className={inputE} placeholder="17/08/2026" /></div><div><label className={labelE}>วันที่ครบรับ</label><input disabled={!canEdit} value={docE.acceptDate} onChange={e => onChange({ quoteAcceptDate: e.target.value })} className={inputE} /></div><div><label className={labelE}>ใช้ได้ถึง</label><input disabled={!canEdit} value={docE.validUntil} onChange={e => onChange({ quoteValidUntil: e.target.value })} className={inputE} /></div><div className="sm:col-span-2"><label className={labelE}>อ้างอิง</label><input disabled={!canEdit} value={docE.ref} onChange={e => onChange({ quoteRef: e.target.value })} className={inputE} /></div></div></div>
     <SetPicker canEdit={canEdit} onAdd={(lines, name) => { onChange({ items: [...(job.items || []), ...lines] }); setAddedMsg(`เพิ่มเซ็ต “${name}” (${lines.length} รายการ) ลงใบเสนอราคาแล้ว`); }} />
     <div className="border rounded-2xl p-3 mb-3 bg-blue-50"><div className="font-bold text-[14px] mb-2">เพิ่มอุปกรณ์ลงใบเสนอราคา</div>
-      <div><label className={labelE}>ค้นหาอุปกรณ์ (พิมพ์เพื่อกรอง)</label><input value={filter} onChange={e => { try { setFilter(e.target.value); } catch { /* ignore */ } }} className={inputE} placeholder="เช่น แผง อินเวอร์เตอร์ แบต" /></div>
-      <div className="grid sm:grid-cols-3 gap-3 mt-2"><div><label className={labelE}>เลือกอุปกรณ์</label><select value={selectedName} onChange={e => handleSelect(e.target.value)} className={inputE}><option value="">— เลือกอุปกรณ์ —</option>{filteredCatalog.map(c => <option key={c.code + c.name} value={c.name}>{c.name} — {fmtBaht(c.price)}</option>)}</select></div><div><label className={labelE}>จำนวน</label><input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className={inputE} /></div><div><label className={labelE}>ราคาต่อหน่วย</label><input type="number" value={unitPrice} onChange={e => setUnitPrice(Number(e.target.value))} className={inputE} /></div></div>
+      <div><label className={labelE} htmlFor="equip-combo">เลือก / ค้นหาอุปกรณ์</label>
+        <Combobox ariaLabel="เลือกหรือค้นหาอุปกรณ์" className="mt-1" value={selectedName} onChange={handleSelect} options={catalog.map(c => ({ value: c.name, label: c.name, hint: fmtBaht(c.price), search: `${c.code} ${c.category} ${c.keywords || ''}` }))} placeholder="พิมพ์เพื่อค้นหา เช่น แผง อินเวอร์เตอร์ แบต หรือเลือกจากรายการ" /></div>
+      <div className="grid grid-cols-2 gap-3 mt-2"><div><label className={labelE}>จำนวน</label><input type="number" min={1} value={qty} onChange={e => setQty(Number(e.target.value))} className={inputE} /></div><div><label className={labelE}>ราคาต่อหน่วย</label><input type="number" value={unitPrice} onChange={e => setUnitPrice(Number(e.target.value))} className={inputE} /></div></div>
       {addedMsg && <p className="text-[13px] text-emerald-700 mt-2">{addedMsg}</p>}
       <button type="button" disabled={!canEdit} onClick={handleAdd} className="mt-3 w-full sm:w-auto bg-[var(--primary)] text-white px-5 py-2.5 rounded-full font-bold text-[13px] disabled:opacity-50">+ เพิ่มลงใบเสนอราคา</button>
     </div>

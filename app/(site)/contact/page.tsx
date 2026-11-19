@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'ติดต่อเรา' };
 export default function Contact() {
   return (
     <div className="max-w-[1100px] mx-auto px-5 pt-16">
-      <SectionTitle eyebrow="Contact us" title="ติดต่อเรา" text="สอบถามข้อมูลหรือนัดสำรวจหน้างานได้ทุกช่องทาง" />
+      <SectionTitle eyebrow="Contact us" as="h1" title="ติดต่อเรา" text="สอบถามข้อมูลหรือนัดสำรวจหน้างานได้ทุกช่องทาง" />
       <div className="grid lg:grid-cols-5 gap-6">
         <Reveal className="lg:col-span-2 glass rounded-[28px] p-6 space-y-5 self-start">
           <div className="font-bold text-[var(--navy)]">{COMPANY.legal}</div>

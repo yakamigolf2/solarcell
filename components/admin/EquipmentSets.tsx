@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Combobox from './Combobox';
 import { Layers, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
 export type SetLine = { name: string; qty: number; price: number; discount: number; details: string[] };
@@ -98,10 +99,7 @@ export default function EquipmentSets({ catalog, canEdit }: { catalog: CatalogRo
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select value={pick} onChange={e => addFromCatalog(e.target.value)} aria-label="เพิ่มจากรายการอุปกรณ์" className={input + ' !w-auto min-w-[260px]'}>
-              <option value="">+ เพิ่มจากรายการอุปกรณ์…</option>
-              {catalog.map(c => <option key={c.code + c.name} value={c.name}>{c.name} — {baht(c.price)}</option>)}
-            </select>
+            <Combobox className="min-w-[280px] flex-1 sm:flex-none sm:w-[340px]" ariaLabel="เพิ่มจากรายการอุปกรณ์" resetOnSelect value={pick} onChange={addFromCatalog} placeholder="+ ค้นหา/เลือกอุปกรณ์เพื่อเพิ่มในเซ็ต" options={catalog.map(c => ({ value: c.name, label: c.name, hint: baht(c.price), search: `${c.code} ${c.category}` }))} />
             <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { name: '', qty: 1, price: 0, discount: 0, details: [] }] })} className="px-3 py-2 rounded-xl border bg-white text-[13px] font-semibold hover:bg-gray-50">+ เพิ่มรายการเอง</button>
             <div className="ml-auto text-[14px]">รวมเซ็ต <b className="text-[17px]">{baht(total)}</b> <span className="text-[11px] text-[var(--muted)]">(ก่อน VAT)</span></div>
           </div>

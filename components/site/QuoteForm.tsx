@@ -45,7 +45,7 @@ export default function QuoteForm() {
       <div><label htmlFor="q-type" className="text-[13px] font-medium">ประเภทอาคาร</label><select id="q-type" value={f.building} onChange={set('building')} className={input}>{BUILDINGS.map(b => <option key={b}>{b}</option>)}</select></div>
       <div><label htmlFor="q-addr" className="text-[13px] font-medium">ที่อยู่ / พื้นที่ติดตั้ง</label><input id="q-addr" value={f.address} onChange={set('address')} autoComplete="street-address" className={input} /></div>
       <div className="sm:col-span-2"><label htmlFor="q-note" className="text-[13px] font-medium">รายละเอียดเพิ่มเติม</label><textarea id="q-note" rows={3} value={f.note} onChange={set('note')} className={input} /></div>
-      <input tabIndex={-1} autoComplete="off" aria-hidden value={f.website} onChange={set('website')} className="hidden" name="website" />
+      <input tabIndex={-1} autoComplete="off" aria-hidden aria-label="ไม่ต้องกรอก" value={f.website} onChange={set('website')} className="hidden" name="website" />
       {state === 'error' && <p role="alert" className="sm:col-span-2 text-[14px] text-red-600 bg-red-50 rounded-2xl px-4 py-3">{msg}</p>}
       <button disabled={state === 'busy'} className="btn-primary sm:col-span-2 inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold disabled:opacity-60">{state === 'busy' ? <><Loader2 size={18} className="animate-spin" /> กำลังส่ง…</> : <><Send size={18} /> ส่งคำขอใบเสนอราคา</>}</button>
     </form>

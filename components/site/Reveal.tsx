@@ -11,11 +11,12 @@ export function RevealItem({ children, className = '' }: { children: React.React
   return <div className={className}>{children}</div>;
 }
 
-export function SectionTitle({ eyebrow, title, text }: { eyebrow?: string; title: string; text?: string }) {
+export function SectionTitle({ eyebrow, title, text, as = 'h2' }: { eyebrow?: string; title: string; text?: string; as?: 'h1' | 'h2' }) {
+  const H = as;
   return (
     <div className="max-w-2xl mb-10">
       {eyebrow && <div className="text-[12px] font-semibold tracking-[.18em] uppercase text-[var(--emerald)] mb-2">{eyebrow}</div>}
-      <h2 className="text-[28px] sm:text-[36px] font-bold leading-tight text-[var(--navy)]">{title}</h2>
+      <H className="text-[28px] sm:text-[36px] font-bold leading-tight text-[var(--navy)]">{title}</H>
       {text && <p className="mt-3 text-[16px] text-[var(--muted)] leading-relaxed">{text}</p>}
     </div>
   );

@@ -16,7 +16,7 @@ export default async function Solutions() {
   const products = await getPublishedProducts();
   return (
     <div className="max-w-[1200px] mx-auto px-5 pt-16">
-      <SectionTitle eyebrow="Products & services" title="สินค้าและบริการ" text="เลือกระบบที่เหมาะกับการใช้ไฟของคุณ เราดูแลตั้งแต่ปรึกษา สำรวจ ออกแบบ จัดหาอุปกรณ์ ติดตั้ง จนถึงเอกสารการไฟฟ้าและการดูแลหลังการขาย" />
+      <SectionTitle eyebrow="Products & services" as="h1" title="สินค้าและบริการ" text="เลือกระบบที่เหมาะกับการใช้ไฟของคุณ เราดูแลตั้งแต่ปรึกษา สำรวจ ออกแบบ จัดหาอุปกรณ์ ติดตั้ง จนถึงเอกสารการไฟฟ้าและการดูแลหลังการขาย" />
 
       <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {SYSTEMS.map(s => (
