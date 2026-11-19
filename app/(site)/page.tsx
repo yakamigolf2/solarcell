@@ -121,7 +121,7 @@ export default async function Home() {
       </section>
 
       {/* 10 — Final CTA */}
-      <section id="contact" className="mt-28 relative overflow-hidden isolate">
+      <section id="contact" className="mt-28 -mb-24 relative overflow-hidden isolate">
         <Image src="/hero-bg.jpg" alt="" fill sizes="100vw" className="object-cover -z-20" />
         <div aria-hidden className="absolute inset-0 -z-10 bg-[#123C32]/90" />
         <div className="max-w-[1100px] mx-auto px-5 py-20 sm:py-28 grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start text-white">
