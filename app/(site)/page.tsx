@@ -25,7 +25,7 @@ export default async function Home() {
         </Reveal>
         <Stagger className="mt-9 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8 items-center justify-items-center">
           {CLIENTS.map(c => (
-            <RevealItem key={c.name}><div className="lift h-[110px] flex items-center justify-center"><Image src={c.src} alt={c.name} width={c.w} height={c.h} className="max-h-[96px] w-auto object-contain" /></div></RevealItem>))}
+            <RevealItem key={c.name}><div className="h-[110px] flex items-center justify-center transition-transform duration-300 ease-out hover:-translate-y-1 hover:scale-110 motion-reduce:transition-none motion-reduce:hover:transform-none"><Image src={c.src} alt={c.name} width={c.w} height={c.h} className="max-h-[96px] w-auto object-contain" /></div></RevealItem>))}
         </Stagger>
       </section>
 

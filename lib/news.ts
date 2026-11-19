@@ -3,12 +3,26 @@ import { getDb, schema } from '@/db';
 import { NEWS as SAMPLE } from '@/lib/site-data';
 
 export const NEWS_COLLECTION = 'bge_news';
-export type NewsItem = { id: string; title: string; tag: string; summary: string; body: string; date: string; cover: string; status: string };
+export type Block = { type: 'heading'; text: string } | { type: 'text'; text: string } | { type: 'image'; url: string; caption: string } | { type: 'video'; url: string };
+export type NewsItem = { id: string; title: string; tag: string; summary: string; body: string; blocks: Block[]; date: string; cover: string; status: string };
+
+function cleanBlocks(v: unknown): Block[] {
+  if (!Array.isArray(v)) return [];
+  const out: Block[] = [];
+  for (const b of v) {
+    if (!b || typeof b !== 'object') continue;
+    const t = (b as any).type;
+    if ((t === 'heading' || t === 'text') && typeof (b as any).text === 'string' && (b as any).text.trim()) out.push({ type: t as 'heading' | 'text', text: (b as any).text });
+    else if (t === 'image' && typeof (b as any).url === 'string' && /^https:\/\//.test((b as any).url)) out.push({ type: 'image', url: (b as any).url, caption: String((b as any).caption || '') });
+    else if (t === 'video' && typeof (b as any).url === 'string' && (b as any).url) out.push({ type: 'video', url: (b as any).url });
+  }
+  return out;
+}
 
 const r = schema.records;
 const toItem = (row: { id: string; value: Record<string, any> }): NewsItem => ({
   id: row.id, title: String(row.value.title || ''), tag: String(row.value.tag || ''), summary: String(row.value.summary || ''),
-  body: String(row.value.body || ''), date: String(row.value.date || ''), cover: String(row.value.cover || ''), status: String(row.value.status || 'แบบร่าง'),
+  body: String(row.value.body || ''), blocks: cleanBlocks(row.value.blocks), date: String(row.value.date || ''), cover: String(row.value.cover || ''), status: String(row.value.status || 'แบบร่าง'),
 });
 
 export const fmtThaiDate = (iso: string) => {
@@ -24,7 +38,7 @@ export async function getPublishedNews(limit?: number): Promise<NewsItem[]> {
     return rows.map(toItem);
   } catch (e) {
     console.error('getPublishedNews failed', e);
-    return SAMPLE.map(n => ({ id: n.id, title: n.title, tag: n.tag, summary: n.text, body: n.text, date: '', cover: '', status: 'เผยแพร่' }));
+    return SAMPLE.map(n => ({ id: n.id, title: n.title, tag: n.tag, summary: n.text, body: n.text, blocks: [], date: '', cover: '', status: 'เผยแพร่' }));
   }
 }
 
