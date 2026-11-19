@@ -1,4 +1,4 @@
-import { Building2, Factory, Home, type LucideIcon } from 'lucide-react';
+import { Activity, BatteryCharging, Bird, Building2, Cable, Calculator, Cpu, Factory, Home, HardHat, HeartHandshake, MessageCircle, ScanSearch, ShieldCheck, Sun, Zap, type LucideIcon } from 'lucide-react';
 
 // Company facts come from the existing quotation template. Projects, testimonials and news below are SAMPLE content —
 // replace with real material before launch.
@@ -28,12 +28,35 @@ export const SOLUTIONS: { slug: string; title: string; icon: LucideIcon; text: s
   { slug: 'factory', title: 'โรงงานและอุตสาหกรรม', icon: Factory, text: 'ระบบขนาดใหญ่บนหลังคาโรงงาน ลดค่าไฟช่วงเวลาทำงาน เพิ่มความสามารถในการแข่งขัน และลดคาร์บอน', points: ['งานโครงสร้างและวิศวกรรมครบวงจร', 'ติดตั้งโดยทีมช่างมีประสบการณ์', 'บริการหลังการขายและบำรุงรักษา'], tone: 'from-violet-100 to-indigo-200 text-indigo-700' },
 ];
 
-export const SERVICES = [
-  { title: 'สำรวจและออกแบบ', text: 'ประเมินหลังคา ทิศทาง ร่มเงา และค่าไฟ เพื่อออกแบบขนาดระบบที่คุ้มที่สุด' },
-  { title: 'จัดหาอุปกรณ์', text: 'แผงโซลาร์ Inverter โครงสร้างและสายไฟมาตรฐาน เลือกให้เหมาะกับงบประมาณ' },
-  { title: 'ติดตั้งและทดสอบระบบ', text: 'ทีมช่างติดตั้งตามมาตรฐานความปลอดภัย พร้อมทดสอบก่อนส่งมอบ' },
-  { title: 'ยื่นเอกสารการไฟฟ้า', text: 'ช่วยดำเนินการยื่นขออนุญาตและขนานไฟตามขั้นตอน' },
-  { title: 'ดูแลและบำรุงรักษา', text: 'ตรวจเช็กระบบ ล้างแผง และแก้ปัญหาหลังการติดตั้ง' },
+export const SERVICES: { title: string; text: string; icon: LucideIcon }[] = [
+  { title: 'ปรึกษาและประเมินความต้องการ', text: 'ฟังการใช้ไฟและเป้าหมายของคุณ แล้วแนะนำระบบที่เหมาะสม ไม่เกินความจำเป็น', icon: MessageCircle },
+  { title: 'สำรวจหน้างานและวิเคราะห์ทิศทางแสง', text: 'ประเมินหลังคา ทิศทาง ร่มเงา และโครงสร้าง เพื่อวางตำแหน่งแผงให้ได้ผลผลิตสูงสุด', icon: ScanSearch },
+  { title: 'ประเมินความคุ้มค่าและแผนคืนทุน', text: 'คำนวณค่าไฟที่ประหยัดได้และระยะเวลาคืนทุนอย่างโปร่งใส ก่อนตัดสินใจ', icon: Calculator },
+  { title: 'ออกแบบและติดตั้งโดยทีมช่าง', text: 'ติดตั้งตามมาตรฐานความปลอดภัย พร้อมทดสอบระบบก่อนส่งมอบ และยื่นเอกสารการไฟฟ้าให้', icon: HardHat },
+  { title: 'ติดตามผลผลิตไฟ', text: 'ระบบมอนิเตอร์ช่วยดูปริมาณไฟที่ผลิตได้ และตรวจพบความผิดปกติได้เร็ว', icon: Activity },
+  { title: 'ดูแลหลังการขายระยะยาว', text: 'บำรุงรักษา ล้างแผง และแก้ปัญหาหลังการติดตั้ง ตามเงื่อนไขในใบเสนอราคา', icon: HeartHandshake },
+];
+
+export const SYSTEMS: { title: string; range: string; text: string; icon: LucideIcon; tone: string }[] = [
+  { title: 'ระบบ On-grid', range: 'บ้านและธุรกิจขนาดเล็ก–กลาง', text: 'ลดค่าไฟช่วงกลางวัน เชื่อมต่อกับระบบการไฟฟ้า คุ้มค่าและติดตั้งไว', icon: Sun, tone: 'from-amber-100 to-orange-200 text-orange-600' },
+  { title: 'ระบบ Hybrid + แบตเตอรี่', range: 'สำรองไฟสำหรับบ้าน', text: 'เก็บไฟส่วนเกินไว้ใช้ตอนกลางคืนและยามไฟดับ รองรับการเชื่อมต่อเครื่องชาร์จรถไฟฟ้า', icon: BatteryCharging, tone: 'from-emerald-100 to-teal-200 text-emerald-700' },
+  { title: 'ระบบสำหรับอาคารพาณิชย์', range: 'สำนักงาน ร้านค้า โกดัง', text: 'ออกแบบตามโหลดไฟฟ้า ลดต้นทุนพลังงานของธุรกิจในช่วงเวลาทำการ', icon: Building2, tone: 'from-sky-100 to-blue-200 text-blue-700' },
+  { title: 'ระบบสำหรับโรงงาน', range: 'ขนาดใหญ่บนหลังคาโรงงาน', text: 'งานโครงสร้างและวิศวกรรมครบวงจร ลดค่าไฟและเพิ่มความสามารถในการแข่งขัน', icon: Factory, tone: 'from-violet-100 to-indigo-200 text-indigo-700' },
+];
+
+export const PRODUCTS: { slug: string; title: string; icon: LucideIcon; hue: string; points: string[]; note?: string }[] = [
+  { slug: 'panel', title: 'แผงโซลาร์เซลล์', icon: Sun, hue: 'from-sky-300 to-blue-600', points: ['แผงมาตรฐาน Tier 1 (เช่น Longi Solar ขนาด 645 วัตต์)', 'รับประกันผลิตภัณฑ์ 15 ปี', 'รับประกันประสิทธิภาพการผลิตไฟ (Efficiency output) 30 ปี'], note: 'ตามที่ระบุในใบเสนอราคา อาจต่างกันตามรุ่นที่เลือก' },
+  { slug: 'inverter', title: 'อินเวอร์เตอร์', icon: Cpu, hue: 'from-emerald-300 to-teal-600', points: ['Hybrid inverter (เช่น Sigenergy ขนาด 10 kW)', 'รับประกัน 10 ปี', 'รองรับระบบ 3 เฟส และการเชื่อมต่อเครื่องชาร์จรถไฟฟ้า'] },
+  { slug: 'battery', title: 'แบตเตอรี่ลิเธียม', icon: BatteryCharging, hue: 'from-amber-300 to-orange-500', points: ['เก็บไฟส่วนเกินไว้ใช้ตอนกลางคืน (เช่น ขนาด 9.04 kWh)', 'ชุดควบคุมการสำรองไฟฟ้าภายในบ้าน (Gateway)', 'ขยายระบบได้ตามความต้องการ'] },
+  { slug: 'protection', title: 'อุปกรณ์ป้องกันและตู้ควบคุม', icon: ShieldCheck, hue: 'from-indigo-300 to-violet-600', points: ['อุปกรณ์ป้องกันไฟฟ้าย้อนกลับ (Zero export)', 'ตู้ควบคุม AC/DC Combiner', 'ระบบกราวด์ และอุปกรณ์ป้องกันไฟกระโชก (Surge protection)'] },
+  { slug: 'cable', title: 'โครงสร้างและสายไฟ', icon: Cable, hue: 'from-cyan-300 to-sky-600', points: ['อุปกรณ์จับยึดแผง (Mounting) ตามโครงสร้างหลังคา', 'สายไฟกระแสตรง (DC) และกระแสสลับ (AC)', 'อุปกรณ์ร้อยสายสำหรับเดินภายนอก'] },
+  { slug: 'extras', title: 'อุปกรณ์เสริมและบริการหลังติดตั้ง', icon: Bird, hue: 'from-fuchsia-300 to-purple-600', points: ['ตะแกรงกันนกใต้แผง (ตามเงื่อนไขของบริษัท)', 'งานบำรุงรักษาและล้างแผงปีละครั้ง', 'รับประกันงานติดตั้ง 2 ปี'] },
+];
+
+export const DESIGN_PRINCIPLES = [
+  { title: 'ออกแบบให้ดูแลรักษาง่าย', text: 'เว้นทางเดินและจุดเข้าถึงแผง ทำให้ล้างและตรวจเช็กระบบได้สะดวกในระยะยาว', icon: HardHat },
+  { title: 'จัดวางแผงให้ได้แสงมากที่สุด', text: 'เลือกทิศทางและองศาที่เหมาะกับหลังคาและร่มเงาในพื้นที่จริง', icon: Sun },
+  { title: 'เลือกอุปกรณ์ที่เชื่อถือได้', text: 'ใช้อุปกรณ์มาตรฐาน มีการรับประกัน และเหมาะกับสภาพการใช้งานของคุณ', icon: Zap },
 ];
 
 export const WHY = [
