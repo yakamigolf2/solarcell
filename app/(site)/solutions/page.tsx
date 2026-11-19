@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2, Phone } from 'lucide-react';
+import { Check, Phone } from 'lucide-react';
 import Calculator from '@/components/site/Calculator';
 import { Reveal, RevealItem, SectionTitle, Stagger } from '@/components/site/Reveal';
 import Image from 'next/image';
@@ -38,8 +38,9 @@ export default async function Solutions() {
                 {p.cover ? <Image src={p.cover} alt={p.title} fill sizes="(min-width:768px) 50vw, 100vw" className="object-cover" /> : <Icon size={84} className="text-white/90 drop-shadow-lg" aria-hidden />}
               </div>
               <div className="p-6 sm:p-8">
-                <h3 className="text-[22px] font-bold text-[var(--navy)]">{p.title}</h3>
-                <ul className="mt-4 space-y-2.5">{p.points.map(pt => <li key={pt} className="flex gap-2 text-[14.5px]"><CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />{pt}</li>)}</ul>
+                <h3 className="text-[26px] sm:text-[30px] font-bold text-[var(--navy)] leading-tight">{p.title}</h3>
+                <div className="mt-2 h-1 w-14 rounded-full bg-[var(--emerald)]" aria-hidden />
+                <ul className="mt-5 space-y-3">{p.points.map(pt => <li key={pt} className="flex items-start gap-3 text-[15.5px] text-[var(--navy)]"><span className="mt-0.5 w-6 h-6 rounded-full bg-[var(--emerald)] text-white flex items-center justify-center shrink-0"><Check size={15} strokeWidth={3} /></span>{pt}</li>)}</ul>
                 {p.note && <p className="mt-3 text-[12px] text-[var(--muted)]">* {p.note}</p>}
                 {p.gallery.length > 0 && <ul className="mt-5 grid grid-cols-4 gap-2">{p.gallery.map((u, k) => <li key={u}><a href={u} target="_blank" rel="noreferrer" className="block relative aspect-[4/3] rounded-xl overflow-hidden border bg-sky-50"><Image src={u} alt={`${p.title} รูปที่ ${k + 1}`} fill sizes="120px" className="object-cover hover:scale-105 transition-transform" /></a></li>)}</ul>}
               </div>
