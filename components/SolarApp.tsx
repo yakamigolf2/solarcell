@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, LayoutDashboard, Users, ClipboardList, FileText, Wallet, Zap, Settings, Menu, X, Phone, MapPin, Calendar, Eye, Pencil, Trash2, Sun, TrendingUp, Clock, AlertTriangle, CheckCircle2, Circle, Building2, Home, Factory, Briefcase, Save, Camera, Copy, ExternalLink, NotebookPen, LogOut, ShieldCheck, UserCog, Lock, KeyRound, User as UserIcon, Mail, Image as ImageIcon } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
+import { MotionConfig, motion } from 'motion/react';
+import Dashboard, { DashboardSkeleton, type DashData } from '@/components/admin/Dashboard';
 
 // ---------- Safe helpers: every risky spot is guarded ----------
 function safe<T>(fn: () => T, fallback: T): T { try { return fn(); } catch { return fallback; } }
@@ -433,6 +435,35 @@ function AppInner() {
     return { totalSales, newLeads: jobs.filter(j => j.status === 'ลีดใหม่').length, waitInstall: jobs.filter(j => j.status === 'รอติดตั้ง').length, waitElec: jobs.filter(j => j.status === 'ยื่นการไฟฟ้า').length, waitingMoney, near: jobs.filter(j => !!j.nextAppt).length };
   }, { totalSales: 0, newLeads: 0, waitInstall: 0, waitElec: 0, waitingMoney: 0, near: 0 }), [jobs]);
 
+  const ACTIVE_ST = ['ตกลงจ้าง', 'มัดจำแล้ว', 'รอติดตั้ง', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า'];
+  const dash: DashData = useMemo(() => safe(() => {
+    const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1); return { key: d.getFullYear() * 12 + d.getMonth(), label: TH_M[d.getMonth()], count: 0 }; });
+    jobs.forEach(j => { const d = new Date(j.created); if (!isNaN(d.getTime())) { const m = months.find(x => x.key === d.getFullYear() * 12 + d.getMonth()); if (m) m.count += 1; } });
+    const n = (f: (j: Job) => boolean) => jobs.filter(f).length;
+    const done = n(j => j.status === 'ส่งมอบงาน');
+    return {
+      greetingName: currentUser?.value.name || '', roleLabel: currentUser ? ROLE_LABEL[currentUser.value.role] : '',
+      kpis: [
+        { key: 'quotes', label: 'ใบเสนอราคา', value: n(j => STATUSES.indexOf(j.status) >= 3), sub: `จากทั้งหมด ${jobs.length} งาน`, tone: 'amber' },
+        { key: 'leads', label: 'ลูกค้าใหม่', value: stats.newLeads, sub: 'รอติดต่อกลับ', tone: 'violet' },
+        { key: 'active', label: 'โครงการที่กำลังดำเนินการ', value: n(j => ACTIVE_ST.includes(j.status)), sub: `เสร็จสิ้นแล้ว ${done} งาน`, tone: 'blue' },
+        { key: 'revenue', label: 'รายได้ (งานที่ตกลงแล้ว)', value: stats.totalSales, money: true, sub: 'รวมทุกโครงการที่ตกลงจ้าง', tone: 'green' },
+      ],
+      extra: { waitingMoney: stats.waitingMoney, waitElec: stats.waitElec, waitInstall: stats.waitInstall },
+      monthly: months.map(m => ({ label: m.label, count: m.count })),
+      donut: [
+        { name: 'กำลังดำเนินการ', value: n(j => ['ตกลงจ้าง', 'มัดจำแล้ว', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า'].includes(j.status)), color: '#22C55E' },
+        { name: 'รอติดตั้ง', value: n(j => j.status === 'รอติดตั้ง'), color: '#3B82F6' },
+        { name: 'เสร็จสิ้น', value: done, color: '#FBBF24' },
+        { name: 'ก่อนการขาย', value: n(j => STATUSES.indexOf(j.status) < 5), color: '#94A3B8' },
+      ],
+      recent: [...records].reverse().slice(0, 5).map(r => ({ id: r.id, name: String(r.value.customer || ''), address: String(r.value.address || ''), status: r.value.status, statusBg: STATUS_COLOR[r.value.status] || '#E2E8F0' })),
+      total: jobs.length,
+    } satisfies DashData;
+  }, { greetingName: '', roleLabel: '', kpis: [], extra: { waitingMoney: 0, waitElec: 0, waitInstall: 0 }, monthly: [], donut: [], recent: [], total: 0 } as DashData), [jobs, records, stats, currentUser]);
+
   async function saveJob(e?: React.FormEvent) {
     try {
       e?.preventDefault();
@@ -538,8 +569,8 @@ function AppInner() {
   const allPhotos: { job: Job; photo: SitePhoto }[] = safe(() => records.flatMap(r => (r.value.sitePhotos || []).map(photo => ({ job: r.value, photo }))), []);
 
   const NavItem = ({ id, label, icon, badge }: { id: any; label: string; icon: React.ReactNode; badge?: number }) => (
-    <button onClick={() => { try { setView(id); setSidebarOpen(false); } catch { /* ignore */ } }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] font-medium transition ${view === id ? 'bg-[var(--primary)] text-white shadow-md' : 'text-[var(--ink)] hover:bg-[var(--primary-soft)]'}`}>
-      {icon}<span className="flex-1">{label}</span>{typeof badge === 'number' && badge > 0 && <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${view === id ? 'bg-white text-[#0B7DFF]' : 'bg-blue-100 text-blue-700'}`}>{badge}</span>}
+    <button onClick={() => { try { setView(id); setSidebarOpen(false); } catch { /* ignore */ } }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] font-medium transition ${view === id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-900/30' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+      {icon}<span className="flex-1">{label}</span>{typeof badge === 'number' && badge > 0 && <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${view === id ? 'bg-white/25 text-white' : 'bg-white/15 text-white'}`}>{badge}</span>}
     </button>
   );
   const inputCls = "w-full px-3 py-2.5 rounded-xl border border-[var(--line2)] bg-[var(--surface)] text-[14px] text-[var(--ink)]";
@@ -571,25 +602,14 @@ function AppInner() {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <div data-safe-area-inset-root style={{ boxSizing: 'border-box', paddingTop: 'var(--safe-area-inset-top)', minHeight: '100vh', background: 'var(--bg)' }} className="overflow-x-clip">
-      <header data-safe-area-sticky-top style={{ top: 'var(--safe-area-inset-top)' }} className="sticky z-30 bg-[var(--surface)]/95 backdrop-blur border-b border-[var(--line2)]">
-        <div className="flex items-center gap-3 px-3 sm:px-6 h-[64px]">
-          <button onClick={() => { try { setSidebarOpen(!sidebarOpen); } catch { /* ignore */ } }} className="lg:hidden p-2 rounded-lg bg-[var(--primary-soft)]" aria-label="เมนู"><Menu size={20} /></button>
-          <div className="flex items-center gap-2 min-w-0"><LogoText /><div className="leading-none min-w-0"><div className="font-extrabold text-[16px] truncate">BGE <span className="text-[var(--primary)]">SolarPro</span> <span className="hidden sm:inline text-[12px] font-medium text-[var(--muted)]">Backoffice</span></div><div className="text-[11px] text-[var(--muted)] truncate">BETTER GROUP ENGINEERING CO., LTD.</div></div></div>
-          <div className="flex-1 hidden md:block max-w-[420px] mx-auto relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาชื่อลูกค้า เบอร์โทร ที่อยู่…" className="w-full pl-9 pr-3 py-2.5 rounded-full border border-[var(--line2)] bg-[var(--bg)] text-[14px]" /></div>
-          <div className="ml-auto md:ml-0 flex items-center gap-2">
-            {can('customers_create') && <button onClick={() => { try { setForm(emptyJob()); setEditing(null); setShowAdd(true); } catch { /* ignore */ } }} className="flex items-center gap-1.5 bg-[var(--primary)] text-white px-3 sm:px-4 py-2.5 rounded-full text-[13px] font-semibold shadow"><Plus size={18} /><span className="hidden sm:inline">เพิ่มลูกค้าใหม่</span><span className="sm:hidden">เพิ่ม</span></button>}
-            <button onClick={() => { try { setView('profile'); } catch { /* ignore */ } }} className="flex items-center gap-2 bg-[var(--primary-soft)] rounded-full pl-1 pr-2 py-1 text-left"><span className="w-8 h-8 rounded-full bg-[#0B3D7A] text-white flex items-center justify-center text-[12px] font-extrabold shrink-0">{initials(currentUser.value.name)}</span><span className="hidden sm:block leading-tight min-w-0"><span className="block text-[12px] font-bold truncate max-w-[120px]">{currentUser.value.name}</span><span className="block text-[10px] text-[var(--muted)]">{ROLE_LABEL[currentUser.value.role]} • {currentUser.value.username}</span></span></button>
-            <button onClick={logout} className="flex items-center gap-1.5 bg-slate-800 text-white px-3 py-2.5 rounded-full text-[13px] font-semibold"><LogOut size={16} /><span className="hidden sm:inline">Logout</span></button>
-          </div>
-        </div>
-      </header>
-
       <div className="flex">
-        <aside className={`fixed lg:sticky lg:top-[64px] z-40 lg:z-0 top-0 left-0 h-full lg:h-[calc(100vh-64px)] w-[260px] shrink-0 bg-[var(--surface)] border-r border-[var(--line2)] p-4 flex flex-col gap-1 transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-          <div className="flex lg:hidden justify-between items-center mb-2"><span className="font-bold">เมนู</span><button onClick={() => setSidebarOpen(false)} className="p-1"><X /></button></div>
-          <div className="bg-white border border-[var(--line2)] rounded-2xl p-3 mb-2"><LogoText size="lg" /><div className="mt-2 text-center"><div className="font-extrabold text-[14px] leading-tight">BGE SolarPro Backoffice</div><div className="text-[10px] text-[var(--muted)] leading-tight mt-1">BETTER GROUP ENGINEERING CO., LTD.</div></div></div>
-          <div className="rounded-2xl bg-[var(--primary-soft)] p-3 mb-2 flex items-center gap-2"><span className="w-9 h-9 rounded-full bg-[#0B3D7A] text-white flex items-center justify-center text-[12px] font-extrabold shrink-0">{initials(currentUser.value.name)}</span><div className="min-w-0"><div className="font-bold text-[13px] truncate">{currentUser.value.name}</div><div className="text-[11px] text-[var(--muted)]">{ROLE_LABEL[currentUser.value.role]} • @{currentUser.value.username}</div></div></div>
+        <aside className={`fixed lg:sticky top-0 lg:top-4 z-40 lg:z-0 left-0 lg:m-4 h-full lg:h-[calc(100vh-32px)] w-[272px] shrink-0 glass-dark text-white lg:rounded-[28px] p-4 flex flex-col gap-1 overflow-y-auto transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          <div className="flex lg:hidden justify-between items-center mb-2"><span className="font-bold">เมนู</span><button onClick={() => setSidebarOpen(false)} className="p-1" aria-label="ปิดเมนู"><X /></button></div>
+          <div className="flex items-center gap-3 mb-3"><span className="bg-white rounded-2xl p-1.5 shrink-0"><img src="/BGE_logo.png" alt="BGE" width={44} height={44} className="w-11 h-11 object-contain" /></span><div className="leading-tight min-w-0"><div className="font-bold text-[17px]">SolarTech</div><div className="text-[12px] text-white/70">Backoffice</div></div></div>
+          <div className="rounded-2xl bg-white/10 p-3 mb-2 flex items-center gap-2"><span className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center text-[12px] font-bold shrink-0">{initials(currentUser.value.name)}</span><div className="min-w-0"><div className="font-semibold text-[13px] truncate">{currentUser.value.name}</div><div className="text-[11px] text-white/65">{ROLE_LABEL[currentUser.value.role]} • @{currentUser.value.username}</div></div></div>
+          <nav className="flex flex-col gap-1">
           <NavItem id="dashboard" label="แดชบอร์ด" icon={<LayoutDashboard size={19} />} />
           {can('customers_view') && <NavItem id="leads" label="ลูกค้า" icon={<Users size={19} />} badge={records.length} />}
           {can('orders_view') && <NavItem id="orders" label="ออเดอร์ / งานติดตั้ง" icon={<ClipboardList size={19} />} badge={stats.waitInstall} />}
@@ -600,30 +620,31 @@ function AppInner() {
           {can('users_view') && <NavItem id="users" label="ผู้ใช้" icon={<UserCog size={19} />} badge={userRecords.length} />}
           {can('settings_view') && <NavItem id="settings" label="ตั้งค่าบริษัท / อุปกรณ์" icon={<Settings size={19} />} />}
           <NavItem id="profile" label="โปรไฟล์ของฉัน" icon={<UserIcon size={19} />} />
-          <div className="mt-auto rounded-2xl bg-gradient-to-br from-[#1E90FF] to-[#0B7DFF] text-white p-4"><div className="flex items-center gap-2 font-bold"><Sun size={20} /> เคล็ดลับวันนี้</div><p className="text-[12px] leading-relaxed mt-1 opacity-90">หลังคาทิศใต้ให้ผลผลิตดีที่สุด ติดตามลีดภายใน 24 ชม. เพิ่มโอกาสปิดงานถึง 2 เท่า</p></div>
-          <p className="text-[11px] text-center text-[var(--muted)]">BGE • BETTER GROUP ENGINEERING</p>
+          </nav>
+          <div className="mt-auto rounded-2xl bg-white/10 p-4"><div className="flex items-center gap-2 font-semibold text-[13px]"><Sun size={18} className="text-amber-300" /> เคล็ดลับวันนี้</div><p className="text-[12px] leading-relaxed mt-1 text-white/75">หลังคาทิศใต้ให้ผลผลิตดีที่สุด ติดตามลีดภายใน 24 ชม. เพิ่มโอกาสปิดงานถึง 2 เท่า</p></div>
+          <p className="text-[11px] text-center text-white/50 mt-1">BGE • BETTER GROUP ENGINEERING</p>
         </aside>
         {sidebarOpen && <button aria-label="ปิดเมนู" onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/30 z-30 lg:hidden" />}
-
+        <div className="flex-1 min-w-0">
+        <header className="sticky top-0 z-30 mx-3 sm:mx-5 lg:mx-6 mt-3 rounded-[24px] glass">
+          <div className="flex items-center gap-3 px-3 sm:px-5 h-[64px]">
+            <button onClick={() => { try { setSidebarOpen(!sidebarOpen); } catch { /* ignore */ } }} className="lg:hidden p-2 rounded-xl bg-white/70" aria-label="เมนู"><Menu size={20} /></button>
+            <div className="lg:hidden font-bold text-[15px] truncate">BGE <span className="text-[var(--primary)]">SolarTech</span></div>
+            <div className="flex-1 hidden md:block max-w-[460px] relative"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาชื่อลูกค้า เบอร์โทร ที่อยู่…" className="w-full pl-10 pr-3 py-2.5 rounded-full border border-white/80 bg-white/70 text-[14px]" /></div>
+            <div className="ml-auto flex items-center gap-2">
+              {can('customers_create') && <button onClick={() => { try { setForm(emptyJob()); setEditing(null); setShowAdd(true); } catch { /* ignore */ } }} className="btn-primary flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-full text-[13px] font-semibold"><Plus size={18} /><span className="hidden sm:inline">เพิ่มลูกค้าใหม่</span><span className="sm:hidden">เพิ่ม</span></button>}
+              <button onClick={() => { try { setView('profile'); } catch { /* ignore */ } }} className="flex items-center gap-2 bg-white/70 rounded-full pl-1 pr-3 py-1 text-left"><span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#102A43] to-[#0F766E] text-white flex items-center justify-center text-[12px] font-bold shrink-0">{initials(currentUser.value.name)}</span><span className="hidden sm:block leading-tight min-w-0"><span className="block text-[12px] font-semibold truncate max-w-[130px]">{currentUser.value.name}</span><span className="block text-[10px] text-[var(--muted)]">{ROLE_LABEL[currentUser.value.role]}</span></span></button>
+              <button onClick={logout} aria-label="ออกจากระบบ" title="ออกจากระบบ" className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--navy)] text-white hover:opacity-90"><LogOut size={16} /></button>
+            </div>
+          </div>
+        </header>
         <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-6 max-w-[1320px] mx-auto w-full">
+          <motion.div key={view} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
           {apiError && <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 text-[13px] px-4 py-3 rounded-2xl flex gap-2"><AlertTriangle size={18} className="shrink-0" />{apiError}</div>}
           {result && <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[13px] px-4 py-3 rounded-2xl flex justify-between gap-2"><span>{result}</span><button onClick={() => setResult(null)} className="font-bold">×</button></div>}
-          {loading && <div className="py-10 text-center text-[var(--muted)]">กำลังโหลดข้อมูล…</div>}
+          {loading && view !== 'dashboard' && <div aria-busy="true" className="space-y-3"><div className="skeleton h-12 w-64" /><div className="skeleton h-40" /><div className="skeleton h-40" /></div>}
 
-          {view === 'dashboard' && !loading && <>
-            <div className="flex flex-wrap items-end justify-between gap-3 mb-4"><div><h1 className="text-[22px] sm:text-[28px] font-extrabold leading-tight">ภาพรวมวันนี้</h1><p className="text-[13px] text-[var(--muted)]">สวัสดี {currentUser.value.name} ({ROLE_LABEL[currentUser.value.role]}) — สรุปงานขาย ติดตั้ง และการเงิน</p></div><div className="flex gap-2"><button onClick={() => setView('orders')} className="bg-[var(--dark)] text-white px-4 py-2 rounded-full text-[13px] font-semibold">ดูงานทั้งหมด →</button></div></div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {[{ label: 'ยอดขาย (งานที่ตกลงแล้ว)', val: fmtBaht(stats.totalSales), sub: `จาก ${jobs.length} งานทั้งหมด`, icon: <TrendingUp />, bg: 'from-[#1E90FF] to-[#0B7DFF]' }, { label: 'ลีดใหม่', val: String(stats.newLeads), sub: 'รอติดต่อกลับ', icon: <Users />, bg: 'from-sky-400 to-blue-600' }, { label: 'งานรอติดตั้ง', val: String(stats.waitInstall), sub: 'พร้อมเข้าหน้างาน', icon: <Clock />, bg: 'from-slate-500 to-slate-700' }, { label: 'งานรอการไฟฟ้า', val: String(stats.waitElec), sub: 'ยื่นขายไฟ / ขนานไฟ', icon: <Zap />, bg: 'from-emerald-400 to-teal-600' }, { label: 'เงินรอโอน', val: fmtBaht(stats.waitingMoney), sub: 'ยอดคงค้างทุกงวด', icon: <Wallet />, bg: 'from-blue-500 to-indigo-600' }, { label: 'ภาพหน้างานทั้งหมด', val: String(allPhotos.length), sub: 'Before / After', icon: <Camera />, bg: 'from-cyan-500 to-blue-600' }].map((c, i) => (
-                <div key={i} className="bg-[var(--surface)] rounded-3xl p-4 sm:p-5 border border-[var(--line2)] shadow-sm"><div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${c.bg} text-white flex items-center justify-center mb-3`}>{c.icon}</div><div className="text-[12px] text-[var(--muted)] font-medium">{c.label}</div><div className="text-[clamp(20px,4vw,32px)] font-extrabold leading-tight [overflow-wrap:anywhere]">{c.val}</div><div className="text-[12px] text-[var(--muted)]">{c.sub}</div></div>
-              ))}
-            </div>
-            <div className="grid lg:grid-cols-5 gap-4 mt-4">
-              <div className="lg:col-span-3 bg-[var(--surface)] rounded-3xl border p-4 sm:p-5"><div className="flex justify-between items-center mb-3"><h3 className="font-bold">งานล่าสุด</h3><button onClick={() => setView('orders')} className="text-[var(--primary)] text-[13px] font-semibold">ดูทั้งหมด →</button></div>
-                <div className="space-y-2">{records.slice(0, 5).map(r => (<button key={r.id} onClick={() => setDetailId(r.id)} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-[var(--primary-soft)] text-left"><div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">{String(r.value.customer || '').replace('คุณ', '').trim().charAt(0)}</div><div className="flex-1 min-w-0"><div className="font-semibold text-[14px] truncate">{r.value.customer}</div><div className="text-[12px] text-[var(--muted)] truncate flex gap-1"><MapPin size={12} />{r.value.address}</div></div><span className="text-[11px] font-bold px-2 py-1 rounded-full shrink-0" style={{ background: STATUS_COLOR[r.value.status] }}>{r.value.status}</span><span className="font-bold text-[14px] hidden sm:block">{fmtBaht(calcTotal(r.value).total)}</span></button>))}</div>
-              </div>
-              <div className="lg:col-span-2 space-y-4"><div className="bg-[var(--surface)] rounded-3xl border p-5"><h3 className="font-bold mb-2">สัดส่วนตามสถานะ</h3>{STATUSES.filter(s => jobs.some(j => j.status === s)).map(s => { const n = jobs.filter(j => j.status === s).length; const pct = Math.round(n / Math.max(1, jobs.length) * 100); return <div key={s} className="mb-2"><div className="flex justify-between text-[12px] mb-1"><span>{s}</span><span className="font-bold">{n} งาน • {pct}%</span></div><div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-[#0B7DFF] rounded-full" style={{ width: pct + '%' }} /></div></div>; })}</div><div className="bg-[var(--dark)] text-white rounded-3xl p-5"><div className="text-[13px] opacity-80">งานที่ต้องการขายไฟ</div><div className="text-[28px] font-extrabold">{jobs.filter(j => j.elecWanted).length} งาน <span className="text-[13px] font-medium opacity-70">จาก {jobs.length} งาน</span></div><button onClick={() => setView('electric')} className="mt-3 bg-[#1E90FF] text-white px-4 py-2 rounded-full text-[13px] font-bold w-full">ติดตามงานการไฟฟ้า →</button></div></div>
-            </div>
-          </>}
+          {view === 'dashboard' && (loading ? <DashboardSkeleton /> : <Dashboard d={dash} onOpen={id => setDetailId(id)} onNav={v => setView(v as any)} />)}
 
           {view === 'users' && <>
             <div className="flex flex-wrap gap-3 items-end justify-between mb-4"><div><h1 className="text-[24px] font-extrabold flex items-center gap-2"><UserCog className="text-[var(--primary)]" /> ผู้ใช้</h1><p className="text-[13px] text-[var(--muted)]">เฉพาะผู้ดูแลระบบ — เพิ่ม แก้ไข ปิด-เปิดใช้งาน ลบ และรีเซ็ตรหัสผ่าน</p></div>
@@ -688,7 +709,9 @@ function AppInner() {
             <div className="bg-[var(--surface)] rounded-3xl border overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-[13px] min-w-[560px]"><thead><tr className="bg-gray-50 text-left"><th className="px-4 py-3">อุปกรณ์</th><th className="px-4 py-3">ราคาต่อหน่วย</th><th className="px-4 py-3">หมวด</th></tr></thead><tbody>{catalog.map((c, i) => <tr key={i} className="border-t"><td className="px-4 py-3 font-medium">{c.name}</td><td className="px-4 py-3">{fmtBaht(c.price)}</td><td className="px-4 py-3">{c.category}</td></tr>)}</tbody></table></div><div className="p-4 bg-blue-50 text-[13px] text-blue-800">VAT คงที่ 7% • ค่าแรงตั้งต้น 25,000 บาท • ส่วนลดปรับได้ในแต่ละใบเสนอราคา</div></div>
             <div className="grid sm:grid-cols-3 gap-3 mt-4">{[{ i: Building2, t: 'บ้าน', d: 'ค่าไฟเฉลี่ย 2,000–6,000 บาท/เดือน' }, { i: Factory, t: 'โรงงาน', d: 'หลังคากว้าง ต้องการกำลังผลิตสูง' }, { i: Briefcase, t: 'ออฟฟิศ', d: 'ใช้ไฟกลางวันตรงกับเวลาผลิต' }].map((x, i) => (<div key={i} className="bg-[var(--surface)] rounded-3xl border p-4"><x.i className="text-[var(--primary)] mb-2" /><div className="font-bold">{x.t}</div><p className="text-[12px] text-[var(--muted)]">{x.d}</p></div>))}</div>
           </>}
+          </motion.div>
         </main>
+        </div>
       </div>
 
       {showUserForm && (
@@ -739,6 +762,7 @@ function AppInner() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setQuoteId(null)}><div className="bg-white text-gray-900 w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl" onClick={e => e.stopPropagation()}><div className="p-5 sm:p-7"><div className="flex justify-end mb-2"><button onClick={() => setQuoteId(null)} className="p-2 bg-gray-100 rounded-full"><X size={18} /></button></div><QuotePaper job={quoteRec.value} company={company} quoteNo={quoteNoFor(quoteRec.id)} /><div className="space-y-2 mt-4"><button disabled={!can('quotes_edit')} onClick={() => { try { setDetailId(quoteRec.id); setQuoteId(null); setDetailTab('เสนอราคา'); } catch { /* ignore */ } }} className="w-full py-3 rounded-full border font-bold disabled:bg-gray-100 disabled:text-gray-400 text-[13px]">แก้ไขใบเสนอราคา</button></div>{can('quotes_approve') ? <button onClick={() => { try { setResult('อนุมัติใบเสนอราคา QT-' + quoteRec.id.slice(-4).toUpperCase() + ' แล้ว'); setQuoteId(null); } catch { /* ignore */ } }} className="w-full mt-2 py-3 rounded-full bg-emerald-600 text-white font-bold flex justify-center gap-2"><CheckCircle2 size={18} /> อนุมัติใบเสนอราคา</button> : <p className="text-center text-[12px] text-gray-400 mt-2">ปุ่มอนุมัติต้องใช้สิทธิ์ “อนุมัติ” ใบเสนอราคา</p>}</div></div></div>
       )}
     </div>
+    </MotionConfig>
   );
 }
 

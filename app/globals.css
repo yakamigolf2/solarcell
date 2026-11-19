@@ -2,45 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/* SolarTech design system — see doc/DESIGN.md */
 :root{
-  --bg:#F2F5F8;
-  --surface:#FFFFFF;
-  --surface2:#EDF4FB;
-  --ink:#111111;
-  --muted:#5B6570;
-  --line:#D8E5F2;
-  --line2:#D9E1EA;
-  --primary:#0B7DFF;
-  --primary2:#1E90FF;
-  --primary-soft:#E7F2FF;
-  --dark:#333333;
-  --success:#059669;
+  --navy:#102A43;
+  --navy2:#0B3D5C;
+  --blue:#3B82F6;
+  --emerald:#16A34A;
+  --cyan:#38BDF8;
+  --bg:#F8FAFC;
+  --soft:#EFF6FF;
+  --surface:rgba(255,255,255,.82);
+  --surface2:#EFF6FF;
+  --ink:#102A43;
+  --muted:#52667A;
+  --line:#DCE8F5;
+  --line2:#D3E2F3;
+  --primary:#2563EB;
+  --primary2:#3B82F6;
+  --primary-soft:#E6F0FF;
+  --dark:#102A43;
+  --success:#16A34A;
   --danger:#DC2626;
+  --shadow-soft:0 8px 30px rgba(16,42,67,.08);
+  --shadow-lift:0 14px 40px rgba(16,42,67,.14);
+  --font-sans:var(--font-prompt),system-ui,-apple-system,"Segoe UI",sans-serif;
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#121418;
-    --surface:#1D2127;
-    --surface2:#242B33;
-    --ink:#F5F7FA;
-    --muted:#A8B2BE;
-    --line:#2D3A48;
-    --line2:#394654;
-    --primary:#2E9BFF;
-    --primary2:#1E90FF;
-    --primary-soft:#162C44;
-    --dark:#F5F7FA;
-  }
-}
+*,::before,::after{border-color:var(--line)}
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+html,body{margin:0;padding:0;color:var(--ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(135deg,#EFF6FF 0%,#F8FAFC 45%,#ECFEFF 100%) fixed;min-height:100vh}
 button,input,select,textarea{font-family:inherit}
 input,select,textarea{outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(11,125,255,.18)}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .no-scrollbar::-webkit-scrollbar{display:none}
 .no-scrollbar{scrollbar-width:none}
 .kanban-scroll::-webkit-scrollbar{height:8px}
 .kanban-scroll::-webkit-scrollbar-thumb{background:#93C5FD;border-radius:99px}
+
+/* Soft glass surfaces: every card in the backoffice that uses the surface token */
+[class*="bg-[var(--surface)]"]{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.rounded-3xl[class*="bg-[var(--surface)]"]{box-shadow:var(--shadow-soft);border-color:rgba(255,255,255,.7)}
+
+/* Reusable utilities */
+.glass{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.75);box-shadow:var(--shadow-soft)}
+.glass-dark{background:linear-gradient(160deg,rgba(16,42,67,.96),rgba(11,93,107,.92));border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 50px rgba(16,42,67,.35)}
+.lift{transition:transform .25s ease,box-shadow .25s ease}
+.lift:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift)}
+.btn-primary{background:linear-gradient(135deg,#16A34A,#0F766E);color:#fff;box-shadow:0 8px 20px rgba(22,163,74,.3)}
+.text-gradient{background:linear-gradient(90deg,#102A43,#2563EB 60%,#0EA5E9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.skeleton{background:linear-gradient(90deg,#E6EEF7 25%,#F4F8FC 50%,#E6EEF7 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:14px}
+@keyframes shimmer{to{background-position:-200% 0}}
+@keyframes float-slow{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.08)}}
+.animate-float{animation:float-slow 6s ease-in-out infinite}
+.blob{position:absolute;border-radius:9999px;filter:blur(70px);opacity:.55;animation:drift 14s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){
+  .animate-float,.blob,.skeleton{animation:none}
+  .lift{transition:none}
+}
 
 /* Quotation table — one <tr> per item, numbers stay on the same row as the name */
 #quotation-paper table{width:100%;border-collapse:collapse;table-layout:fixed}
