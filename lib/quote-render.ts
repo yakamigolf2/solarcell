@@ -86,6 +86,8 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   const text = (s: string, x: number, yy: number, o: { size?: number; weight?: 400 | 500 | 600 | 700; color?: string; align?: CanvasTextAlign } = {}) => {
     font(o.size ?? 10, o.weight ?? 400); ctx.fillStyle = o.color ?? INK; ctx.textAlign = o.align ?? 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, yy);
   };
+  // Draws single-line text and shrinks the font (down to 7px) so it ends before `maxRight` instead of running under the neighbouring box.
+  const fit = (s: string, x: number, yy: number, maxRight: number) => { let sz = 9.5; font(sz, 400); while (sz > 7 && x + ctx.measureText(s).width > maxRight) { sz -= 0.5; font(sz, 400); } text(s, x, yy, { size: sz, color: '#374151' }); };
   const hline = (yy: number, x1 = M, x2 = W - M, color = LINE) => { ctx.strokeStyle = color; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x1, yy); ctx.lineTo(x2, yy); ctx.stroke(); };
   const rrect = (x: number, yy: number, w: number, h: number, r: number, fill: string) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x, yy, w, h, r); ctx.fill(); };
   const lines = (s: string, x: number, yy: number, maxW: number, o: { size?: number; weight?: 400 | 500 | 600 | 700; color?: string; lh?: number } = {}) => {
@@ -106,19 +108,19 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
     const labelX = M, valX = M + 44;
     font(10, 700); text('ผู้ขาย :', labelX, yy, { weight: 700 });
     let h = lines(d.seller.name, valX, yy, 180, { weight: 700 }); yy += Math.max(h, 14);
-    text('ที่อยู่ :', labelX, yy, { weight: 700 }); h = lines(d.seller.address, valX, yy, 190, { color: '#374151' }); yy += Math.max(h, 14);
+    text('ที่อยู่ :', labelX, yy, { weight: 700 }); h = lines(d.seller.address, valX, yy, 178, { color: '#374151' }); yy += Math.max(h, 14);
     text('เลขที่ภาษี :', labelX, yy, { weight: 700 }); text(`${d.seller.taxId} (สำนักงานใหญ่)`, valX + 26, yy, { color: '#374151' }); yy += 10;
-    text('โทร', 278, 102, { color: MUTED, size: 9 }); text(d.seller.phone, 300, 102, { color: '#374151', size: 9.5 });
-    text('อีเมล', 278, 118, { color: MUTED, size: 9 }); text(d.seller.email, 300, 118, { color: '#374151', size: 9.5 });
+    text('โทร', 262, 102, { color: MUTED, size: 9 }); text(d.seller.phone, 284, 102, { color: '#374151', size: 9.5 });
+    text('อีเมล', 262, 118, { color: MUTED, size: 9 }); fit(d.seller.email, 284, 118, 402);
     hline(yy, M, 365); yy += 16;
     const cy0 = yy;
-    text('ลูกค้า :', labelX, yy, { weight: 700 }); h = lines(d.cust.name, valX, yy, 190, { weight: 700 }); yy += Math.max(h, 14);
-    text('ที่อยู่ :', labelX, yy, { weight: 700 }); h = lines(d.cust.address, valX, yy, 190, { color: '#374151' }); yy += Math.max(h, 14);
+    text('ลูกค้า :', labelX, yy, { weight: 700 }); h = lines(d.cust.name, valX, yy, 178, { weight: 700 }); yy += Math.max(h, 14);
+    text('ที่อยู่ :', labelX, yy, { weight: 700 }); h = lines(d.cust.address, valX, yy, 178, { color: '#374151' }); yy += Math.max(h, 14);
     text('เลขที่ภาษี :', labelX, yy, { weight: 700 }); text(d.cust.taxId || '-', valX + 26, yy, { color: '#374151' }); yy += 14;
     text('เรียน :', labelX, yy, { weight: 700 }); text(d.cust.attn || '-', valX, yy, { color: '#374151' }); yy += 6;
-    text('โทร', 278, cy0, { color: MUTED, size: 9 }); text(d.cust.phone || '-', 300, cy0, { color: '#374151', size: 9.5 });
+    text('โทร', 262, cy0, { color: MUTED, size: 9 }); fit(d.cust.phone || '-', 284, cy0, 402);
     // right column: meta box + back contact
-    rrect(412, 96, W - M - 412, 82, 8, BAND);
+    rrect(414, 96, W - M - 414, 82, 8, BAND);
     const meta: [string, string][] = [['เลขที่เอกสาร :', d.doc.docNo], ['วันที่ออก :', d.doc.issueDate], ['วันที่ตอบรับ :', d.doc.acceptDate || '-'], ['ใช้ได้ถึง :', d.doc.validUntil], ['อ้างอิง :', d.doc.ref || '-']];
     meta.forEach(([k, v], i) => { text(k, 420, 112 + i * 14.5, { weight: 700, size: 9 }); text(v, 482, 112 + i * 14.5, { size: 9 }); });
     text('ติดต่อกลับที่ :', 412, 200, { weight: 700, size: 9.5 });
