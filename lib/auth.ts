@@ -39,7 +39,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
 export function can(user: SessionUser, ...keys: string[]) {
   // Permissions added after a user was created (news_manage) default to the role's rule: Admin only.
-  return keys.some((k) => user.value.permissions?.[k] ?? ((k === 'news_manage' || k === 'projects_manage' || k === 'products_manage') && user.value.role === 'Admin'));
+  return keys.some((k) => user.value.permissions?.[k] ?? ((k === 'news_manage' || k === 'projects_manage' || k === 'products_manage' || k === 'clients_manage') && user.value.role === 'Admin'));
 }
 
 export function publicUser(u: SessionUser) { return { id: u.id, value: { ...u.value, password: '' } }; }

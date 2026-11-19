@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { ArrowRight, Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 import { COMPANY, NAV } from '@/lib/site-data';
-import CyberTransition from './CyberTransition';
+import RouteTransition from './RouteTransition';
 
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -24,7 +24,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="site-theme relative min-h-screen overflow-x-clip">
-        <CyberTransition />
+        <RouteTransition />
         <header className="sticky top-3 z-50 mx-3 sm:mx-6 lg:mx-auto lg:max-w-[1200px]">
           <div className="glass rounded-full px-4 sm:px-6 h-16 flex items-center gap-4">
             <Brand />

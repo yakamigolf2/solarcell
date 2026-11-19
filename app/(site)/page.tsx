@@ -11,8 +11,9 @@ import ProjectCard from '@/components/site/ProjectCard';
 import QuoteForm from '@/components/site/QuoteForm';
 import { Reveal, RevealItem, SectionTitle, Stagger } from '@/components/site/Reveal';
 import { getPublishedProducts } from '@/lib/products';
+import { getPublishedClients } from '@/lib/clients';
 import { getPublishedProjects } from '@/lib/projects';
-import { CLIENTS, COMPANY } from '@/lib/site-data';
+import { COMPANY } from '@/lib/site-data';
 import { COMPANY_STATS, FAQ, TRUST_FACTS } from '@/lib/solar-copy';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ const WHY = [
 ];
 
 export default async function Home() {
-  const [products, projects] = await Promise.all([getPublishedProducts(), getPublishedProjects(3)]);
+  const [products, projects, clients] = await Promise.all([getPublishedProducts(), getPublishedProjects(3), getPublishedClients()]);
   const stats = COMPANY_STATS.filter(s => s.value);
   const ld = {
     '@context': 'https://schema.org',
@@ -59,12 +60,12 @@ export default async function Home() {
             <p className="mt-5 text-[11.5px] text-[var(--muted)]">เงื่อนไขการรับประกันเป็นไปตามที่ระบุในใบเสนอราคาและอาจต่างกันตามรุ่นอุปกรณ์</p>
           </div>
         </Reveal>
-        <Reveal className="mt-10">
+        {clients.length > 0 && <Reveal className="mt-10">
           <h3 className="text-center text-[13px] font-semibold tracking-[.18em] uppercase text-[var(--muted)]">ลูกค้าของเรา</h3>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-            {CLIENTS.map(c => <li key={c.name} className="transition-transform duration-300 hover:-translate-y-1 hover:scale-105 motion-reduce:transform-none"><Image src={c.src} alt={c.name} width={c.w} height={c.h} className="h-[70px] w-auto object-contain" /></li>)}
+            {clients.map(c => <li key={c.id} className="transition-transform duration-300 hover:-translate-y-1 hover:scale-105 motion-reduce:transform-none"><Image src={c.logo} alt={c.name} width={200} height={70} className="h-[70px] w-auto max-w-[200px] object-contain" /></li>)}
           </ul>
-        </Reveal>
+        </Reveal>}
       </section>
 
       {/* 4 — Interactive explorer (lazy-loaded) */}

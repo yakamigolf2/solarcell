@@ -3,13 +3,13 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { NAV } from '@/lib/site-data';
 
-const MIN_MS = 650;   // keep the effect visible long enough to read
+const MIN_MS = 300;   // the veil itself only appears after ~160ms, so quick navigations just show the progress bar
 const MAX_MS = 5000;  // never get stuck if navigation fails
 
 const LABELS: Record<string, string> = { ...Object.fromEntries(NAV.map(n => [n.href, n.label])), '/quote': 'ขอใบเสนอราคา' };
 
-/** Cyber-style page-load overlay shown between clicking an internal link and the new route rendering. CSS-only motion (transform/opacity). */
-export default function CyberTransition() {
+/** Page-load indicator between clicking an internal link and the new route rendering: top gradient bar, then (if slow) a soft frosted card with the logo. CSS-only motion. */
+export default function RouteTransition() {
   const pathname = usePathname();
   const [phase, setPhase] = useState<'idle' | 'loading' | 'leaving'>('idle');
   const [target, setTarget] = useState('');
@@ -31,7 +31,7 @@ export default function CyberTransition() {
       if (url.origin !== location.origin || url.pathname === location.pathname) return;
       clear();
       startedAt.current = Date.now();
-      setTarget(LABELS[url.pathname] || (url.pathname === '/admin' ? 'BACKOFFICE' : 'BGE SOLARTECH'));
+      setTarget(LABELS[url.pathname] || (url.pathname === '/admin' ? 'ระบบหลังบ้าน' : url.pathname.startsWith('/news/') ? 'ข่าวสาร' : 'หน้าถัดไป'));
       setPct(8); setPhase('loading');
       timers.current.push(setTimeout(() => { setPhase('leaving'); timers.current.push(setTimeout(() => setPhase('idle'), 260)); }, MAX_MS));
     };
@@ -59,18 +59,13 @@ export default function CyberTransition() {
 
   if (phase === 'idle') return null;
   return (
-    <div aria-hidden className={`cyber-tr ${phase === 'leaving' ? 'is-leaving' : ''}`}>
-      <div className="cyber-bar-top"><span style={{ transform: `scaleX(${pct / 100})` }} /></div>
-      <div className="cyber-screen">
-        <div className="cyber-grid" />
-        <div className="cyber-scan" />
-        <span className="cyber-corner tl" /><span className="cyber-corner tr" /><span className="cyber-corner bl" /><span className="cyber-corner br" />
-        <div className="cyber-hud">
-          <div className="cyber-ring"><i /><i /><b>{Math.min(pct, 100)}</b></div>
-          <div className="cyber-glitch" data-text="LOADING">LOADING</div>
-          <div className="cyber-mono">&gt; BGE SOLARTECH // <em>{target}</em><span className="cyber-caret">_</span></div>
-          <div className="cyber-meter"><span style={{ transform: `scaleX(${pct / 100})` }} /></div>
-          <div className="cyber-mono dim">SYS.LINK ESTABLISHED · {String(Math.min(pct, 100)).padStart(3, '0')}%</div>
+    <div aria-hidden className={`route-tr ${phase === 'leaving' ? 'is-leaving' : ''}`}>
+      <div className="route-bar"><span style={{ transform: `scaleX(${pct / 100})` }} /></div>
+      <div className="route-veil">
+        <div className="route-card">
+          <div className="route-mark"><i /><img src="/BGE_logo.png" alt="" /></div>
+          <div className="route-label">กำลังเปิด <b>{target}</b></div>
+          <div className="route-dots"><span /><span /><span /></div>
         </div>
       </div>
     </div>

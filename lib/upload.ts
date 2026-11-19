@@ -28,3 +28,19 @@ export async function uploadImage(file: File, folder: 'photos' | 'slips' | 'news
   const res = await upload(`${folder}/${Date.now()}.${ext}`, body, { access: 'public', handleUploadUrl: '/api/upload', contentType: body.type || file.type });
   return res.url;
 }
+
+/** Logos keep their transparency: PNG/WebP are uploaded as-is (or downscaled to PNG if huge); never converted to JPEG. */
+export async function uploadLogo(file: File): Promise<string> {
+  if (!/^image\/(png|webp|jpeg)$/.test(file.type)) throw new Error('รองรับไฟล์ PNG, WebP หรือ JPG');
+  let body: Blob = file;
+  if (file.size > 3 * 1024 * 1024) {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+    body = await new Promise<Blob>((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('ย่อรูปไม่สำเร็จ'))), 'image/png'));
+  }
+  const ext = body.type === 'image/png' ? 'png' : body.type === 'image/webp' ? 'webp' : 'jpg';
+  const res = await upload(`clients/${Date.now()}.${ext}`, body, { access: 'public', handleUploadUrl: '/api/upload', contentType: body.type || file.type });
+  return res.url;
+}

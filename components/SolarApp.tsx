@@ -7,6 +7,7 @@ import GroupsEditor, { type SpecGroup } from '@/components/admin/GroupsEditor';
 import Combobox from '@/components/admin/Combobox';
 import EquipmentSets from '@/components/admin/EquipmentSets';
 import SetPicker from '@/components/admin/SetPicker';
+import ClientsAdmin from '@/components/admin/ClientsAdmin';
 import ProductsAdmin from '@/components/admin/ProductsAdmin';
 import ProjectsAdmin from '@/components/admin/ProjectsAdmin';
 import QuotationView from '@/components/admin/QuotationView';
@@ -55,12 +56,12 @@ type Job = {
 type Rec = { id: string; value: Job };
 type CompanySettings = { address: string; phone: string; taxId: string; email?: string };
 type Role = 'Admin' | 'Sale' | 'Technician' | 'Accountant';
-type PermKey = 'customers_view' | 'customers_create' | 'customers_edit' | 'customers_delete' | 'orders_view' | 'orders_create' | 'orders_edit' | 'orders_delete' | 'orders_change_status' | 'quotes_view' | 'quotes_create' | 'quotes_edit' | 'quotes_approve' | 'finance_view' | 'finance_confirm' | 'finance_edit_installments' | 'electric_view' | 'electric_update' | 'photos_view' | 'photos_upload' | 'photos_delete' | 'users_view' | 'users_manage' | 'settings_view' | 'settings_edit' | 'news_manage' | 'projects_manage' | 'products_manage';
+type PermKey = 'customers_view' | 'customers_create' | 'customers_edit' | 'customers_delete' | 'orders_view' | 'orders_create' | 'orders_edit' | 'orders_delete' | 'orders_change_status' | 'quotes_view' | 'quotes_create' | 'quotes_edit' | 'quotes_approve' | 'finance_view' | 'finance_confirm' | 'finance_edit_installments' | 'electric_view' | 'electric_update' | 'photos_view' | 'photos_upload' | 'photos_delete' | 'users_view' | 'users_manage' | 'settings_view' | 'settings_edit' | 'news_manage' | 'projects_manage' | 'products_manage' | 'clients_manage';
 type Permissions = Record<PermKey, boolean>;
 type AppUser = { name: string; username: string; password: string; phone: string; email: string; role: Role; status: 'ใช้งาน' | 'ปิดใช้งาน'; created: string; lastLogin: string; permissions: Permissions };
 type UserRec = { id: string; value: AppUser };
 
-const ALL_PERMS: PermKey[] = ['customers_view', 'customers_create', 'customers_edit', 'customers_delete', 'orders_view', 'orders_create', 'orders_edit', 'orders_delete', 'orders_change_status', 'quotes_view', 'quotes_create', 'quotes_edit', 'quotes_approve', 'finance_view', 'finance_confirm', 'finance_edit_installments', 'electric_view', 'electric_update', 'photos_view', 'photos_upload', 'photos_delete', 'users_view', 'users_manage', 'settings_view', 'settings_edit', 'news_manage', 'projects_manage', 'products_manage'];
+const ALL_PERMS: PermKey[] = ['customers_view', 'customers_create', 'customers_edit', 'customers_delete', 'orders_view', 'orders_create', 'orders_edit', 'orders_delete', 'orders_change_status', 'quotes_view', 'quotes_create', 'quotes_edit', 'quotes_approve', 'finance_view', 'finance_confirm', 'finance_edit_installments', 'electric_view', 'electric_update', 'photos_view', 'photos_upload', 'photos_delete', 'users_view', 'users_manage', 'settings_view', 'settings_edit', 'news_manage', 'projects_manage', 'products_manage', 'clients_manage'];
 function permsFrom(list: PermKey[]): Permissions { const o = {} as Permissions; ALL_PERMS.forEach(k => o[k] = list.includes(k)); return o; }
 const ROLE_PERMS: Record<Role, Permissions> = {
   Admin: permsFrom(ALL_PERMS),
@@ -77,7 +78,7 @@ const PERM_GROUPS: { module: string; items: { key: PermKey; label: string }[] }[
   { module: 'งานการไฟฟ้า', items: [{ key: 'electric_view', label: 'ดู' }, { key: 'electric_update', label: 'อัปเดต' }] },
   { module: 'ภาพหน้างาน', items: [{ key: 'photos_view', label: 'ดู' }, { key: 'photos_upload', label: 'อัปโหลด' }, { key: 'photos_delete', label: 'ลบ' }] },
   { module: 'จัดการผู้ใช้', items: [{ key: 'users_view', label: 'ดู' }, { key: 'users_manage', label: 'จัดการ' }] },
-  { module: 'ข่าวสารบนเว็บไซต์', items: [{ key: 'news_manage', label: 'จัดการข่าว' }, { key: 'projects_manage', label: 'จัดการผลงาน' }, { key: 'products_manage', label: 'จัดการอุปกรณ์' }] },
+  { module: 'ข่าวสารบนเว็บไซต์', items: [{ key: 'news_manage', label: 'จัดการข่าว' }, { key: 'projects_manage', label: 'จัดการผลงาน' }, { key: 'products_manage', label: 'จัดการอุปกรณ์' }, { key: 'clients_manage', label: 'จัดการลูกค้าของเรา' }] },
   { module: 'ตั้งค่าระบบ', items: [{ key: 'settings_view', label: 'ดู' }, { key: 'settings_edit', label: 'แก้ไข' }] },
 ];
 export const SAMPLE_USERS: AppUser[] = [
@@ -255,7 +256,7 @@ export default function App() {
 }
 
 function AppInner() {
-  const [view, setView] = useState<'dashboard' | 'leads' | 'orders' | 'quotes' | 'finance' | 'electric' | 'album' | 'settings' | 'users' | 'news' | 'projects' | 'products' | 'profile'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'leads' | 'orders' | 'quotes' | 'finance' | 'electric' | 'album' | 'settings' | 'users' | 'news' | 'projects' | 'products' | 'clients' | 'profile'>('dashboard');
   const [records, setRecords] = useState<Rec[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -646,6 +647,7 @@ function AppInner() {
           {can('news_manage') && <NavItem id="news" label="ข่าวสารเว็บไซต์" icon={<FileText size={19} />} />}
           {can('projects_manage') && <NavItem id="projects" label="ผลงานเว็บไซต์" icon={<Building2 size={19} />} />}
           {can('products_manage') && <NavItem id="products" label="อุปกรณ์เว็บไซต์" icon={<Zap size={19} />} />}
+          {can('clients_manage') && <NavItem id="clients" label="ลูกค้าของเรา (เว็บไซต์)" icon={<Users size={19} />} />}
           {can('users_view') && <NavItem id="users" label="ผู้ใช้" icon={<UserCog size={19} />} badge={userRecords.length} />}
           {can('settings_view') && <NavItem id="settings" label="ตั้งค่าบริษัท / อุปกรณ์" icon={<Settings size={19} />} />}
           <NavItem id="profile" label="โปรไฟล์ของฉัน" icon={<UserIcon size={19} />} />
@@ -678,6 +680,7 @@ function AppInner() {
           {view === 'news' && can('news_manage') && <NewsAdmin />}
           {view === 'projects' && can('projects_manage') && <ProjectsAdmin />}
           {view === 'products' && can('products_manage') && <ProductsAdmin />}
+          {view === 'clients' && can('clients_manage') && <ClientsAdmin />}
 
           {view === 'users' && <>
             <div className="flex flex-wrap gap-3 items-end justify-between mb-4"><div><h1 className="text-[24px] font-extrabold flex items-center gap-2"><UserCog className="text-[var(--primary)]" /> ผู้ใช้</h1><p className="text-[13px] text-[var(--muted)]">เฉพาะผู้ดูแลระบบ — เพิ่ม แก้ไข ปิด-เปิดใช้งาน ลบ และรีเซ็ตรหัสผ่าน</p></div>

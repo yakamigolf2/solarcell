@@ -111,38 +111,26 @@ aside.glass-dark::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)}
   .iso-flow,.iso-beam{animation:none}
 }
 
-/* ---- Cyber page transition (compositor-friendly: transform + opacity only) ---- */
-.cyber-tr{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:1;transition:opacity .26s ease-out;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.cyber-tr.is-leaving{opacity:0}
-.cyber-screen{position:absolute;inset:0;background:#08241D;overflow:hidden;animation:cyber-in .18s ease-out}
-.cyber-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(114,182,90,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(114,182,90,.13) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
-.cyber-scan{position:absolute;left:0;right:0;top:0;height:120px;background:linear-gradient(to bottom,transparent,rgba(114,182,90,.22),transparent);animation:cyber-scan 1.1s linear infinite;will-change:transform}
-.cyber-corner{position:absolute;width:34px;height:34px;border:2px solid #72B65A;opacity:.85}
-.cyber-corner.tl{top:22px;left:22px;border-right:0;border-bottom:0}.cyber-corner.tr{top:22px;right:22px;border-left:0;border-bottom:0}
-.cyber-corner.bl{bottom:22px;left:22px;border-right:0;border-top:0}.cyber-corner.br{bottom:22px;right:22px;border-left:0;border-top:0}
-.cyber-hud{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#CFE9C2;padding:0 24px;text-align:center}
-.cyber-ring{position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center;color:#72B65A;font-size:20px;font-weight:700}
-.cyber-ring i{position:absolute;inset:0;border-radius:50%;border:2px solid transparent;border-top-color:#72B65A;border-right-color:#72B65A;animation:cyber-spin 1s linear infinite;will-change:transform}
-.cyber-ring i+i{inset:10px;border-top-color:#E8BD65;border-right-color:transparent;border-left-color:#E8BD65;animation-duration:1.6s;animation-direction:reverse}
-.cyber-glitch{position:relative;font-size:clamp(34px,7vw,60px);font-weight:800;letter-spacing:.18em;color:#E9FFE0}
-.cyber-glitch::before,.cyber-glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;opacity:.8}
-.cyber-glitch::before{color:#72B65A;animation:cyber-glitch-a .9s steps(2,end) infinite}
-.cyber-glitch::after{color:#E8BD65;animation:cyber-glitch-b .9s steps(2,end) infinite}
-.cyber-mono{font-size:13px;letter-spacing:.12em;color:#9FD08B}.cyber-mono em{font-style:normal;color:#fff}.cyber-mono.dim{font-size:11px;color:#5E8A57}
-.cyber-caret{animation:cyber-blink .8s steps(1) infinite}
-.cyber-meter{width:min(360px,70vw);height:6px;border-radius:99px;background:rgba(114,182,90,.18);overflow:hidden}
-.cyber-meter span,.cyber-bar-top span{display:block;height:100%;width:100%;transform-origin:left;background:linear-gradient(90deg,#3F8A2F,#72B65A,#E8BD65);transition:transform .12s linear}
-.cyber-bar-top{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;background:rgba(114,182,90,.2)}
-@keyframes cyber-in{from{opacity:0}to{opacity:1}}
-@keyframes cyber-scan{from{transform:translateY(-130px)}to{transform:translateY(100vh)}}
-@keyframes cyber-spin{to{transform:rotate(360deg)}}
-@keyframes cyber-blink{50%{opacity:0}}
-@keyframes cyber-glitch-a{0%{transform:translate(0,0)}25%{transform:translate(-3px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,2px)}100%{transform:translate(0,0)}}
-@keyframes cyber-glitch-b{0%{transform:translate(0,0)}25%{transform:translate(3px,-1px)}50%{transform:translate(-2px,1px)}75%{transform:translate(1px,-2px)}100%{transform:translate(0,0)}}
+/* ---- Route transition (DESIGN.md: soft UI, gradient, subtle motion; transform/opacity only, no backdrop blur) ---- */
+.route-tr{position:fixed;inset:0;z-index:100;pointer-events:none;transition:opacity .22s ease-out}
+.route-tr.is-leaving{opacity:0}
+.route-bar{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;background:rgba(18,60,50,.08)}
+.route-bar span{display:block;height:100%;width:100%;transform-origin:left;background:linear-gradient(90deg,#3B82F6,#38BDF8 35%,#72B65A 70%,#16A34A);box-shadow:0 0 10px rgba(56,189,248,.55);transition:transform .14s linear}
+.route-veil{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(239,246,255,.92),rgba(248,249,246,.92) 55%,rgba(236,254,255,.92));opacity:0;animation:route-veil-in .22s ease-out .16s forwards}
+.route-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 34px 22px;border-radius:28px;background:#fff;border:1px solid rgba(255,255,255,.9);box-shadow:0 18px 50px rgba(16,42,67,.14);transform:translateY(8px) scale(.98);animation:route-card-in .3s cubic-bezier(.2,.8,.2,1) .16s forwards}
+.route-mark{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center}
+.route-mark img{width:46px;height:46px;object-fit:contain}
+.route-mark i{position:absolute;inset:0;border-radius:50%;border:3px solid rgba(59,130,246,.14);border-top-color:#3B82F6;border-right-color:#38BDF8;animation:route-spin .9s linear infinite;will-change:transform}
+.route-label{font-size:13px;color:#52667A}.route-label b{color:#102A43;font-weight:600}
+.route-dots{display:flex;gap:5px}.route-dots span{width:6px;height:6px;border-radius:50%;background:#72B65A;opacity:.35;animation:route-dot 1s ease-in-out infinite}
+.route-dots span:nth-child(2){animation-delay:.15s}.route-dots span:nth-child(3){animation-delay:.3s}
+@keyframes route-veil-in{to{opacity:1}}
+@keyframes route-card-in{to{transform:none}}
+@keyframes route-spin{to{transform:rotate(360deg)}}
+@keyframes route-dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @media (prefers-reduced-motion: reduce){
   /* only the thin progress bar remains */
-  .cyber-screen{background:transparent;animation:none}
-  .cyber-grid,.cyber-scan,.cyber-corner,.cyber-hud{display:none}
+  .route-veil{display:none}
 }
 
 /* ---- Button micro-interactions (transform/opacity only, so they stay smooth) ---- */
