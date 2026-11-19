@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --bg:#F2F5F8;
+  --surface:#FFFFFF;
+  --surface2:#EDF4FB;
+  --ink:#111111;
+  --muted:#5B6570;
+  --line:#D8E5F2;
+  --line2:#D9E1EA;
+  --primary:#0B7DFF;
+  --primary2:#1E90FF;
+  --primary-soft:#E7F2FF;
+  --dark:#333333;
+  --success:#059669;
+  --danger:#DC2626;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121418;
+    --surface:#1D2127;
+    --surface2:#242B33;
+    --ink:#F5F7FA;
+    --muted:#A8B2BE;
+    --line:#2D3A48;
+    --line2:#394654;
+    --primary:#2E9BFF;
+    --primary2:#1E90FF;
+    --primary-soft:#162C44;
+    --dark:#F5F7FA;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font-family:inherit}
+input,select,textarea{outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(11,125,255,.18)}
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{scrollbar-width:none}
+.kanban-scroll::-webkit-scrollbar{height:8px}
+.kanban-scroll::-webkit-scrollbar-thumb{background:#93C5FD;border-radius:99px}
+
+/* Quotation table — one <tr> per item, numbers stay on the same row as the name */
+#quotation-paper table{width:100%;border-collapse:collapse;table-layout:fixed}
+#quotation-paper thead th{height:28px;padding:6px 8px;vertical-align:middle;background:#F2F2F2;border-bottom:1px solid #ccc;font-weight:700;line-height:1.4}
+#quotation-paper thead th:nth-child(1){width:42%;text-align:left}
+#quotation-paper thead th:nth-child(2){width:12%;text-align:center}
+#quotation-paper thead th:nth-child(3){width:15%;text-align:right}
+#quotation-paper thead th:nth-child(4){width:13%;text-align:right}
+#quotation-paper thead th:nth-child(5){width:18%;text-align:right}
+#quotation-paper tbody td{height:auto;min-height:32px;padding:8px;vertical-align:middle;border-bottom:1px solid #eee;line-height:1.4}
+#quotation-paper tbody td:nth-child(1){text-align:left}
+#quotation-paper tbody td:nth-child(2){text-align:center}
+#quotation-paper tbody td:nth-child(3){text-align:right}
+#quotation-paper tbody td:nth-child(4){text-align:right}
+#quotation-paper tbody td:nth-child(5){text-align:right}
