@@ -125,7 +125,7 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   }
 
   const BODY_BOTTOM = H - 36;
-  const FOOTER_H = 372;
+  const FOOTER_H = 334; // height of summary + payment + remarks + signatures; it only moves to a new page when it no longer fits
   const colR = { qty: 338, price: 394, disc: 446, vat: 478, net: W - M };
   function tableHeader() {
     rrect(M, y, W - 2 * M, 24, 6, BAND);
@@ -168,24 +168,24 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   font(16, 700); ctx.fillStyle = '#3B3F9E'; ctx.textAlign = 'right'; ctx.fillText(fmt2(d.summary.total), W - M - 36, fy + 18); text('บาท', W - M - 10, fy + 18, { size: 9.5, color: '#3B3F9E', align: 'right' });
   text('จำนวนเงินที่ถูกหัก ณ ที่จ่าย', 470, fy + 48, { weight: 600, align: 'right', size: 9.5 }); text('0.00 บาท', W - M - 4, fy + 48, { align: 'right', size: 9.5 });
   text('จำนวนเงินที่ชำระ', 470, fy + 64, { weight: 600, align: 'right', size: 9.5 }); text(`${fmt2(d.summary.total)} บาท`, W - M - 4, fy + 64, { align: 'right', size: 9.5 });
-  fy += 86; hline(fy); fy += 16;
+  fy += 76; hline(fy); fy += 14;
   text('ชำระเงิน', M + 4, fy + 4, { weight: 700 });
   text(`${d.bank.bank}`, 92, fy + 4, { color: '#374151' }); text(`${d.bank.type} ${d.bank.no}`, 92, fy + 20, { weight: 700 }); text(d.bank.name, 92, fy + 36, { color: '#374151' });
-  fy += 52; hline(fy); fy += 16;
+  fy += 46; hline(fy); fy += 14;
   text('หมายเหตุ', M + 4, fy + 4, { weight: 700 });
   text('เงื่อนไขการชำระเงิน', 92, fy + 4, { color: '#374151' });
-  d.payments.forEach((p, i) => text(`(${i + 1}) ${p.label} ชำระ ${p.pct}%`, 92, fy + 20 + i * 14, { color: '#374151' }));
-  fy += 28 + d.payments.length * 14; hline(fy); fy += 16;
+  d.payments.forEach((p, i) => text(`(${i + 1}) ${p.label} ชำระ ${p.pct}%`, 92, fy + 19 + i * 13, { color: '#374151' }));
+  fy += 24 + d.payments.length * 13; hline(fy); fy += 14;
   text('รับรอง', M + 4, fy + 4, { weight: 700 });
   const cols = [{ t: 'ผู้ออกเอกสาร (ผู้ขาย)', x: 130 }, { t: 'ผู้อนุมัติเอกสาร (ผู้ขาย)', x: 232 }, { t: 'ตราประทับ (ผู้ขาย)', x: 338 }, { t: 'ผู้รับเอกสาร (ลูกค้า)', x: 428 }];
   cols.forEach(c => text(c.t, c.x, fy + 4, { weight: 600, size: 8.5 }));
-  const sigY = fy + 70;
+  const sigY = fy + 62;
   [130, 232, 428].forEach(x => { ctx.setLineDash([3, 2]); hline(sigY, x, x + 86, '#9CA3AF'); ctx.setLineDash([]); });
   text(d.doc.issueDate, 173, sigY + 13, { size: 9, align: 'center' }); text(d.doc.issueDate, 275, sigY + 13, { size: 9, align: 'center' });
   text(d.cust.name, 471, sigY + 13, { size: 9, align: 'center' });
-  if (logo) ctx.drawImage(logo, 338, fy + 12, 62, 62);
-  ctx.setLineDash([3, 2]); ctx.strokeStyle = '#9CA3AF'; ctx.strokeRect(524, fy + 12, 38, 62); ctx.setLineDash([]);
-  text('ตราประทับ', 543, fy + 46, { size: 7, color: MUTED, align: 'center' });
+  if (logo) ctx.drawImage(logo, 338, fy + 10, 56, 56);
+  ctx.setLineDash([3, 2]); ctx.strokeStyle = '#9CA3AF'; ctx.strokeRect(524, fy + 10, 38, 56); ctx.setLineDash([]);
+  text('ตราประทับ', 543, fy + 42, { size: 7, color: MUTED, align: 'center' });
 
   // page numbers (now that the total is known)
   pages.forEach((c, i) => {
