@@ -7,7 +7,6 @@ import Faq from '@/components/site/home/Faq';
 import HeroSection from '@/components/site/home/HeroSection';
 import LazyExperience from '@/components/site/home/LazyExperience';
 import ProductsShowcase from '@/components/site/home/ProductsShowcase';
-import SolutionCards from '@/components/site/home/SolutionCards';
 import ProjectCard from '@/components/site/ProjectCard';
 import QuoteForm from '@/components/site/QuoteForm';
 import { Reveal, RevealItem, SectionTitle, Stagger } from '@/components/site/Reveal';
@@ -68,15 +67,8 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      {/* 3 — Solutions */}
-      <section id="solutions" className="max-w-[1200px] mx-auto px-5 pt-28">
-        <SectionTitle eyebrow="Solar solutions" title="เลือกระบบที่เหมาะกับการใช้ไฟของคุณ" text="สามรูปแบบหลักของระบบโซลาร์เซลล์ ต่างกันที่การเชื่อมต่อกับกริดและการเก็บพลังงาน" />
-        <Reveal><SolutionCards /></Reveal>
-      </section>
-
       {/* 4 — Interactive explorer (lazy-loaded) */}
-      <section id="experience" className="max-w-[1200px] mx-auto px-5 pt-28 scroll-mt-24">
-        <SectionTitle eyebrow="Interactive experience" title="ดูว่าพลังงานไหลในระบบอย่างไร" text="สลับประเภทระบบ แล้วคลิกแต่ละส่วนประกอบเพื่อดูหน้าที่และเส้นทางพลังงาน" />
+      <section id="experience" className="max-w-[1200px] mx-auto px-5 pt-24 scroll-mt-24" aria-label="ระบบโซลาร์เซลล์ของเรา">
         <Reveal><LazyExperience /></Reveal>
       </section>
 

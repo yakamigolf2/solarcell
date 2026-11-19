@@ -2,7 +2,7 @@
 import { useId } from 'react';
 
 // Isometric SVG house used by the hero (decorative) and the interactive energy-flow explorer.
-export type Scenario = 'on-grid' | 'hybrid' | 'off-grid';
+export type Scenario = 'on-grid' | 'hybrid' | 'off-grid' | 'commercial';
 export type PartId = 'solar' | 'inverter' | 'battery' | 'home' | 'grid';
 
 type P3 = [number, number, number];
@@ -45,12 +45,20 @@ export const SCENARIO_FLOWS: Record<Scenario, string[]> = {
   'on-grid': ['solarInv', 'invHome', 'homeGridOut', 'gridHomeIn'],
   hybrid: ['solarInv', 'invHome', 'invBat', 'batHome', 'homeGridOut'],
   'off-grid': ['solarInv', 'invBat', 'batHome'],
+  commercial: ['solarInv', 'invHome', 'homeGridOut', 'gridHomeIn'],
 };
+
+/** Where a callout chip should sit over the SVG, as % of the viewBox (560 x 450). */
+export function partAnchor(p: PartId): { left: string; top: string } {
+  const at: Record<PartId, P3> = { solar: [2.6, 1.6, 3.5], inverter: [4.3, 4.3, 1.7], battery: [5.1, 3.6, 1.45], home: [1.8, 5.1, 1.7], grid: [7.55, 0.5, 3.4] };
+  const [x, y] = pt(at[p]);
+  return { left: `${(x / 560 * 100).toFixed(1)}%`, top: `${(y / 450 * 100).toFixed(1)}%` };
+}
 export const FLOW_LABELS = FLOWS;
 
 export default function IsoScene({ scenario = 'hybrid', selected = null, onSelect, interactive = false, className = '', hideFlows = false }: { scenario?: Scenario; selected?: PartId | null; onSelect?: (p: PartId) => void; interactive?: boolean; className?: string; hideFlows?: boolean }) {
   const uid = useId().replace(/:/g, '');
-  const hasBattery = scenario !== 'on-grid';
+  const hasBattery = scenario === 'hybrid' || scenario === 'off-grid';
   const hasGrid = scenario !== 'off-grid';
   const active = SCENARIO_FLOWS[scenario].map(k => FLOWS[k]);
   const dim = (p: PartId) => (selected && selected !== p ? 0.55 : 1);
@@ -80,11 +88,11 @@ export default function IsoScene({ scenario = 'hybrid', selected = null, onSelec
 
       {/* sun + beams */}
       <g aria-hidden>
-        <circle cx={sunC[0]} cy={sunC[1]} r="62" fill={`url(#sun${uid})`} className="iso-sun" />
+        <circle cx={sunC[0]} cy={sunC[1]} r="62" fill={`url(#sun${uid})`} />
         <circle cx={sunC[0]} cy={sunC[1]} r="21" fill={C.gold} />
         <g stroke={C.gold} strokeWidth="2.5" strokeLinecap="round" className="iso-rays">{Array.from({ length: 10 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return <line key={i} x1={(sunC[0] + Math.cos(a) * 30).toFixed(1)} y1={(sunC[1] + Math.sin(a) * 30).toFixed(1)} x2={(sunC[0] + Math.cos(a) * 40).toFixed(1)} y2={(sunC[1] + Math.sin(a) * 40).toFixed(1)} />; })}</g>
-        <path d={`M${sunC[0] + 26} ${sunC[1] + 12} L${pt([2.6, 1.2, 3.2]).join(' ')}`} stroke={C.gold} strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" className="iso-beam" opacity=".8" />
-        <path d={`M${sunC[0] + 30} ${sunC[1] + 4} L${pt([2.0, 3.6, 3.4]).join(' ')}`} stroke={C.gold} strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" className="iso-beam" opacity=".6" />
+        <path d={`M${sunC[0] + 26} ${sunC[1] + 12} L${pt([2.6, 1.2, 3.2]).join(' ')}`} stroke={C.gold} strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" opacity=".8" />
+        <path d={`M${sunC[0] + 30} ${sunC[1] + 4} L${pt([2.0, 3.6, 3.4]).join(' ')}`} stroke={C.gold} strokeWidth="2" strokeDasharray="2 7" strokeLinecap="round" opacity=".6" />
       </g>
 
       {/* ground */}
@@ -125,13 +133,13 @@ export default function IsoScene({ scenario = 'hybrid', selected = null, onSelec
       <g {...hot('solar', 'แผงโซลาร์เซลล์')} opacity={dim('solar')} filter={glow('solar')}>
         {panels.map((p, i) => <g key={i}><polygon points={poly(p)} fill={`url(#pv${uid})`} stroke="#CFE0F5" strokeWidth="1.6" strokeLinejoin="round" />
           <path d={`M${pt([(p[0][0] + p[3][0]) / 2, (p[0][1] + p[3][1]) / 2, (p[0][2] + p[3][2]) / 2]).join(' ')} L${pt([(p[1][0] + p[2][0]) / 2, (p[1][1] + p[2][1]) / 2, (p[1][2] + p[2][2]) / 2]).join(' ')}`} stroke={C.panelLine} strokeWidth=".8" opacity=".7" /></g>)}
-        <polygon points={poly([slope(0.14, 0.07), slope(0.14, 0.93), slope(0.86, 0.93), slope(0.86, 0.07)])} fill="#FFE9A8" opacity=".12" className="iso-shine" />
+        <polygon points={poly([slope(0.14, 0.07), slope(0.14, 0.93), slope(0.86, 0.93), slope(0.86, 0.07)])} fill="#FFE9A8" opacity=".12" />
       </g>
 
       {/* wall equipment */}
       <g {...hot('inverter', scenario === 'hybrid' ? 'ไฮบริดอินเวอร์เตอร์' : scenario === 'off-grid' ? 'อินเวอร์เตอร์และชาร์จคอนโทรลเลอร์' : 'อินเวอร์เตอร์')} opacity={dim('inverter')} filter={glow('inverter')}>
         <Box x={4} y={3.7} z={0.8} w={0.3} d={0.85} h={0.85} top="#fff" left="#F5F6F2" right="#E9ECE4" />
-        <circle cx={pt([4.3, 4.12, 1.2])[0]} cy={pt([4.3, 4.12, 1.2])[1]} r="3.2" fill={C.energy} className="iso-led" />
+        <circle cx={pt([4.3, 4.12, 1.2])[0]} cy={pt([4.3, 4.12, 1.2])[1]} r="3.2" fill={C.energy} />
       </g>
       <g aria-hidden opacity={dim('home')}>
         <Box x={4} y={1.5} z={0.9} w={0.25} d={0.6} h={0.65} top="#fff" left="#F5F6F2" right="#E3E7DD" />

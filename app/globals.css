@@ -50,11 +50,10 @@ aside.glass-dark{scrollbar-color:rgba(255,255,255,.35) transparent}
 aside.glass-dark::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)}
 
 /* Soft glass surfaces: every card in the backoffice that uses the surface token */
-[class*="bg-[var(--surface)]"]{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .rounded-3xl[class*="bg-[var(--surface)]"]{box-shadow:var(--shadow-soft);border-color:rgba(255,255,255,.7)}
 
 /* Reusable utilities */
-.glass{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.75);box-shadow:var(--shadow-soft)}
+.glass{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.8);box-shadow:var(--shadow-soft)}
 .glass-dark{background:linear-gradient(160deg,rgba(16,42,67,.96),rgba(11,93,107,.92));border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 50px rgba(16,42,67,.35)}
 .lift{transition:transform .25s ease,box-shadow .25s ease}
 .lift:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift)}
@@ -104,13 +103,10 @@ aside.glass-dark::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)}
 @keyframes led-blink{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes shine{0%,100%{opacity:.08}50%{opacity:.22}}
 .iso-flow{animation:flow-dash 1.2s linear infinite}
-.iso-beam{animation:flow-dash 3s linear infinite}
-.iso-sun{transform-box:fill-box;transform-origin:center;animation:sun-pulse 4.5s ease-in-out infinite}
-.iso-led{animation:led-blink 2s ease-in-out infinite}
-.iso-shine{animation:shine 5s ease-in-out infinite}
+.iso-beam{animation:none}
 .iso-hot{cursor:pointer;transition:opacity .2s,filter .2s}
 .iso-hot:hover{filter:brightness(1.05) drop-shadow(0 0 6px rgba(114,182,90,.65))}
 .iso-hot:focus-visible{outline:none;filter:drop-shadow(0 0 6px rgba(18,60,50,.8))}
 @media (prefers-reduced-motion: reduce){
-  .iso-flow,.iso-beam,.iso-sun,.iso-led,.iso-shine{animation:none}
+  .iso-flow,.iso-beam{animation:none}
 }
