@@ -586,25 +586,33 @@ function AppInner() {
   if (!currentUser) {
     if (booting) return <div className="min-h-screen flex items-center justify-center text-[var(--muted)]">กำลังโหลด…</div>;
     return (
-      <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--bg)' }} className="overflow-x-clip flex items-center justify-center p-4">
-        <div className="w-full max-w-[560px]">
-          <div className="bg-[var(--surface)] rounded-[28px] border border-[var(--line2)] shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-[#1E90FF] to-[#0B3D7A] text-white p-6 sm:p-8 text-center">
-              <div className="bg-white rounded-2xl p-3 inline-block"><LogoText size="lg" /></div>
-              <h1 className="text-[22px] font-extrabold mt-3 leading-tight">BGE SolarPro Backoffice</h1>
-              <p className="text-[12px] opacity-90 mt-1">BETTER GROUP ENGINEERING CO., LTD.</p>
-              <p className="text-[13px] opacity-85 mt-2">เข้าสู่ระบบเพื่อจัดการลูกค้า ออเดอร์ ใบเสนอราคา และการเงิน</p>
+      <main className="relative min-h-screen overflow-hidden flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-[#EFF6FF] via-[#F8FAFC] to-[#ECFEFF]">
+        <div aria-hidden className="blob w-[420px] h-[420px] bg-sky-300 -top-28 -left-24" />
+        <div aria-hidden className="blob w-[380px] h-[380px] bg-emerald-200 bottom-0 right-0" style={{ animationDelay: '-7s' }} />
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="relative w-full max-w-[980px] grid md:grid-cols-[1.05fr_1fr] rounded-[32px] overflow-hidden glass">
+          <section className="glass-dark text-white p-8 sm:p-10 flex flex-col justify-between gap-10 relative overflow-hidden">
+            <div aria-hidden className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-gradient-to-br from-amber-300/50 to-transparent blur-2xl" />
+            <div className="relative flex items-center gap-3"><span className="bg-white rounded-2xl p-1.5"><img src="/BGE_logo.png" alt="BGE" width={52} height={52} className="w-[52px] h-[52px] object-contain" /></span><div className="leading-tight"><div className="text-[20px] font-bold">SolarTech</div><div className="text-[12px] text-white/70">Backoffice</div></div></div>
+            <div className="relative">
+              <h1 className="text-[28px] sm:text-[34px] font-bold leading-tight">จัดการงานโซลาร์เซลล์<br />ครบทุกขั้นตอน</h1>
+              <p className="mt-3 text-[14px] text-white/75 leading-relaxed">ลูกค้า ออเดอร์ ใบเสนอราคา การเงิน งานการไฟฟ้า และภาพหน้างาน ในที่เดียว</p>
+              <ul className="mt-6 grid gap-2.5 text-[13px] text-white/85">{['ติดตามสถานะงานตั้งแต่ลีดจนส่งมอบ', 'ออกใบเสนอราคา PDF พร้อมเอกสารแนบ', 'ควบคุมสิทธิ์ตามบทบาทผู้ใช้'].map(t => <li key={t} className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-300 shrink-0" />{t}</li>)}</ul>
             </div>
-            <form onSubmit={handleLogin} className="p-5 sm:p-6 space-y-3">
-              <div><label className={labelCls}>Username</label><input value={loginUsername} onChange={e => { setLoginUsername(e.target.value); setLoginError(null); }} className={inputCls} placeholder="เช่น admin" autoComplete="username" /></div>
-              <div><label className={labelCls}>Password</label><input type="password" value={loginPassword} onChange={e => { setLoginPassword(e.target.value); setLoginError(null); }} className={inputCls} placeholder="••••••••" autoComplete="current-password" /></div>
-              {loginError && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-[13px] px-3 py-2.5 rounded-xl flex gap-2"><AlertTriangle size={17} className="shrink-0" />{loginError}</div>}
-              <button disabled={loginBusy} type="submit" className="w-full bg-[var(--primary)] text-white py-3 rounded-full font-bold text-[15px] disabled:opacity-50">{loginBusy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</button>
+            <p className="relative text-[11px] text-white/55">BETTER GROUP ENGINEERING CO., LTD.</p>
+          </section>
+          <section className="bg-white/85 p-8 sm:p-10 flex flex-col justify-center">
+            <h2 className="text-[24px] font-bold text-[var(--navy)]">เข้าสู่ระบบ</h2>
+            <p className="text-[13px] text-[var(--muted)] mt-1">กรอกบัญชีผู้ใช้เพื่อเข้าใช้งานระบบหลังบ้าน</p>
+            <form onSubmit={handleLogin} className="mt-6 space-y-4" noValidate>
+              <div><label htmlFor="login-user" className={labelCls}>Username</label><div className="relative"><UserIcon size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" /><input id="login-user" value={loginUsername} onChange={e => { setLoginUsername(e.target.value); setLoginError(null); }} className={inputCls + ' !pl-10'} placeholder="เช่น admin" autoComplete="username" autoFocus /></div></div>
+              <div><label htmlFor="login-pass" className={labelCls}>Password</label><div className="relative"><Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" /><input id="login-pass" type="password" value={loginPassword} onChange={e => { setLoginPassword(e.target.value); setLoginError(null); }} className={inputCls + ' !pl-10'} placeholder="••••••••" autoComplete="current-password" /></div></div>
+              {loginError && <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-700 text-[13px] px-3 py-2.5 rounded-xl flex gap-2"><AlertTriangle size={17} className="shrink-0" />{loginError}</div>}
+              <button disabled={loginBusy} type="submit" className="btn-primary w-full py-3.5 rounded-full font-bold text-[15px] disabled:opacity-60 transition hover:brightness-105">{loginBusy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</button>
             </form>
-          </div>
-          <p className="text-center text-[11px] text-[var(--muted)] mt-3">BGE • BETTER GROUP ENGINEERING CO., LTD.</p>
-        </div>
-      </div>
+            <a href="/" className="mt-6 text-center text-[13px] text-[var(--muted)] hover:text-[var(--primary)]">← กลับไปหน้าเว็บไซต์</a>
+          </section>
+        </motion.div>
+      </main>
     );
   }
 

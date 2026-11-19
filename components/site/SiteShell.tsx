@@ -22,12 +22,12 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const active = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen overflow-x-clip">
+      <div className="site-theme relative min-h-screen overflow-x-clip">
         <header className="sticky top-3 z-50 mx-3 sm:mx-6 lg:mx-auto lg:max-w-[1200px]">
           <div className="glass rounded-full px-4 sm:px-6 h-16 flex items-center gap-4">
             <Brand />
             <nav className="hidden lg:flex items-center gap-1 mx-auto" aria-label="เมนูหลัก">
-              {NAV.map(n => <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined} className={`px-4 py-2 rounded-full text-[14px] font-medium transition ${active(n.href) ? 'bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow' : 'text-[var(--navy)] hover:bg-white/80'}`}>{n.label}</Link>)}
+              {NAV.map(n => <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined} className={`px-4 py-2 rounded-full text-[14px] font-medium transition ${active(n.href) ? 'bg-[var(--navy)] text-white shadow' : 'text-[var(--navy)] hover:bg-white/80'}`}>{n.label}</Link>)}
             </nav>
             <Link href="/quote" className="btn-primary ml-auto lg:ml-0 hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[14px] font-semibold">ขอใบเสนอราคา <ArrowRight size={16} /></Link>
             <button onClick={() => setOpen(!open)} className="lg:hidden ml-auto sm:ml-0 w-10 h-10 rounded-full bg-white/70 flex items-center justify-center" aria-label="เมนู" aria-expanded={open}>{open ? <X size={20} /> : <Menu size={20} />}</button>
@@ -42,7 +42,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
         <main>{children}</main>
 
-        <footer className="mt-24 bg-gradient-to-br from-[#102A43] to-[#0B4F5C] text-white">
+        <footer className="mt-24 bg-[#123C32] text-white">
           <div className="max-w-[1200px] mx-auto px-5 py-14 grid gap-10 md:grid-cols-4">
             <div className="md:col-span-2">
               <Brand light />

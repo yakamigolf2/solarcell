@@ -4,7 +4,7 @@ import { Camera, HardHat, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { PROJECT_TYPES } from '@/lib/site-data';
 
-type Project = { title: string; place: string; type: string; kw: number; text: string; cover: string; status: 'เผยแพร่' | 'แบบร่าง' };
+type Project = { title: string; place: string; type: string; kw: number; text: string; cover: string; status: 'เผยแพร่' | 'แบบร่าง'; panelBrand?: string; inverterBrand?: string };
 type Rec = { id: string; value: Project };
 const COLLECTION = 'bge_projects';
 const empty = (): Project => ({ title: '', place: '', type: PROJECT_TYPES[0], kw: 0, text: '', cover: '', status: 'แบบร่าง' });
@@ -74,6 +74,8 @@ export default function ProjectsAdmin() {
           <div><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-type">ประเภท</label><select id="p-type" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={input}>{PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
           <div><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-place">สถานที่ (จังหวัด/พื้นที่)</label><input id="p-place" value={form.place} onChange={e => setForm({ ...form, place: e.target.value })} className={input} /></div>
           <div><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-kw">ขนาดระบบ (kWp)</label><input id="p-kw" type="number" min={0} step="0.1" value={form.kw} onChange={e => setForm({ ...form, kw: Number(e.target.value) })} className={input} /></div>
+          <div><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-pb">ยี่ห้อแผงโซลาร์ (ไม่บังคับ)</label><input id="p-pb" value={form.panelBrand || ''} onChange={e => setForm({ ...form, panelBrand: e.target.value })} className={input} /></div>
+          <div><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-ib">ยี่ห้ออินเวอร์เตอร์ (ไม่บังคับ)</label><input id="p-ib" value={form.inverterBrand || ''} onChange={e => setForm({ ...form, inverterBrand: e.target.value })} className={input} /></div>
           <div className="sm:col-span-2"><label className="text-[12px] font-semibold text-[var(--muted)]" htmlFor="p-text">รายละเอียด</label><textarea id="p-text" rows={4} value={form.text} onChange={e => setForm({ ...form, text: e.target.value })} className={input} /></div>
           <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
             <label className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[13px] font-semibold bg-white ${busy ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-gray-50'}`}><Camera size={15} /> {form.cover ? 'เปลี่ยนรูปปก' : 'อัปโหลดรูปปก'}<input type="file" accept="image/*" className="hidden" onChange={e => { void pickCover(e.target.files?.[0]); e.target.value = ''; }} /></label>

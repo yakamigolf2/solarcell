@@ -85,3 +85,32 @@ aside.glass-dark::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)}
 #quotation-paper tbody td:nth-child(3){text-align:right}
 #quotation-paper tbody td:nth-child(4){text-align:right}
 #quotation-paper tbody td:nth-child(5){text-align:right}
+
+/* ---- BGE SolarTech public-site theme: Japanese-minimal, forest green + warm white ---- */
+.site-theme{
+  --navy:#123C32; --ink:#202723; --muted:#5B685F; --emerald:#3F8A2F; --energy:#72B65A; --gold:#E8BD65;
+  --primary:#2E7D4F; --primary-soft:#EAF3E6; --line:#E1E6DC; --line2:#D8DFD2; --warm:#F8F9F6;
+  background:var(--warm); color:var(--ink);
+}
+.site-theme .glass{background:rgba(255,255,255,.86);border:1px solid #fff;box-shadow:0 10px 34px rgba(18,60,50,.07)}
+.site-theme .btn-primary{background:#123C32;color:#fff;box-shadow:0 10px 24px rgba(18,60,50,.22);transition:background .25s,transform .25s}
+.site-theme .btn-primary:hover{background:#1B5446;transform:translateY(-1px)}
+.site-theme .text-gradient{background:linear-gradient(90deg,#123C32,#3F8A2F 70%,#72B65A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.site-theme .lift:hover{box-shadow:0 18px 44px rgba(18,60,50,.14)}
+.site-theme :focus-visible{outline:2px solid #3F8A2F;outline-offset:2px}
+
+@keyframes flow-dash{to{stroke-dashoffset:-32}}
+@keyframes sun-pulse{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes led-blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes shine{0%,100%{opacity:.08}50%{opacity:.22}}
+.iso-flow{animation:flow-dash 1.2s linear infinite}
+.iso-beam{animation:flow-dash 3s linear infinite}
+.iso-sun{transform-box:fill-box;transform-origin:center;animation:sun-pulse 4.5s ease-in-out infinite}
+.iso-led{animation:led-blink 2s ease-in-out infinite}
+.iso-shine{animation:shine 5s ease-in-out infinite}
+.iso-hot{cursor:pointer;transition:opacity .2s,filter .2s}
+.iso-hot:hover{filter:brightness(1.05) drop-shadow(0 0 6px rgba(114,182,90,.65))}
+.iso-hot:focus-visible{outline:none;filter:drop-shadow(0 0 6px rgba(18,60,50,.8))}
+@media (prefers-reduced-motion: reduce){
+  .iso-flow,.iso-beam,.iso-sun,.iso-led,.iso-shine{animation:none}
+}
