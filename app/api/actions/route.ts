@@ -27,6 +27,7 @@ function authorize(user: SessionUser, action: string, collection: string) {
   if (collection === USERS) return isWrite ? can(user, 'users_manage') : can(user, 'users_view', 'users_manage');
   if (collection === NEWS_COLLECTION) return can(user, 'news_manage');
   if (collection === 'bge_attachments') return isWrite ? can(user, 'quotes_edit', 'quotes_create') : can(user, 'quotes_view');
+  if (collection === 'bge_equipment_sets') return isWrite ? can(user, 'settings_edit') : can(user, 'quotes_view', 'settings_view');
   if (collection === PRODUCTS_COLLECTION) return can(user, 'products_manage');
   if (collection === PROJECTS_COLLECTION) return can(user, 'projects_manage');
   if (collection === COMPANY) return isWrite ? can(user, 'settings_edit') : true;
