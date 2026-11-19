@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getDb, schema } from '@/db';
 import { NEWS_COLLECTION } from '@/lib/news';
 import { PROJECTS_COLLECTION } from '@/lib/projects';
+import { PRODUCTS_COLLECTION } from '@/lib/products';
 import { can, COMPANY, getSessionUser, JOBS, type SessionUser, USERS } from '@/lib/auth';
 
 const r = schema.records;
@@ -26,6 +27,7 @@ function authorize(user: SessionUser, action: string, collection: string) {
   if (collection === USERS) return isWrite ? can(user, 'users_manage') : can(user, 'users_view', 'users_manage');
   if (collection === NEWS_COLLECTION) return can(user, 'news_manage');
   if (collection === 'bge_attachments') return isWrite ? can(user, 'quotes_edit', 'quotes_create') : can(user, 'quotes_view');
+  if (collection === PRODUCTS_COLLECTION) return can(user, 'products_manage');
   if (collection === PROJECTS_COLLECTION) return can(user, 'projects_manage');
   if (collection === COMPANY) return isWrite ? can(user, 'settings_edit') : true;
   return false;

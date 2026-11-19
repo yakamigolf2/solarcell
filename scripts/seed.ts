@@ -46,6 +46,19 @@ async function main() {
     for (let i = P.length - 1; i >= 0; i--) { const [title, place, type, kw, text] = P[i]; await db.insert(records).values({ collection: 'bge_projects', value: { title, place, type, kw, text, cover: '', status: 'เผยแพร่' }, idempotencyKey: `seed-project-${i}` }).onConflictDoNothing(); }
     console.log('projects + 6');
   }
+  const prods = await db.select().from(records).where(eq(records.collection, 'bge_products'));
+  if (prods.length === 0) {
+    const P = [
+      ['แผงโซลาร์เซลล์', 'sun', ['แผงมาตรฐาน Tier 1 (เช่น Longi Solar ขนาด 645 วัตต์)', 'รับประกันผลิตภัณฑ์ 15 ปี', 'รับประกันประสิทธิภาพการผลิตไฟ (Efficiency output) 30 ปี'], 'ตามที่ระบุในใบเสนอราคา อาจต่างกันตามรุ่นที่เลือก'],
+      ['อินเวอร์เตอร์', 'cpu', ['Hybrid inverter (เช่น Sigenergy ขนาด 10 kW)', 'รับประกัน 10 ปี', 'รองรับระบบ 3 เฟส และการเชื่อมต่อเครื่องชาร์จรถไฟฟ้า'], ''],
+      ['แบตเตอรี่ลิเธียม', 'battery', ['เก็บไฟส่วนเกินไว้ใช้ตอนกลางคืน (เช่น ขนาด 9.04 kWh)', 'ชุดควบคุมการสำรองไฟฟ้าภายในบ้าน (Gateway)', 'ขยายระบบได้ตามความต้องการ'], ''],
+      ['อุปกรณ์ป้องกันและตู้ควบคุม', 'shield', ['อุปกรณ์ป้องกันไฟฟ้าย้อนกลับ (Zero export)', 'ตู้ควบคุม AC/DC Combiner', 'ระบบกราวด์ และอุปกรณ์ป้องกันไฟกระโชก (Surge protection)'], ''],
+      ['โครงสร้างและสายไฟ', 'cable', ['อุปกรณ์จับยึดแผง (Mounting) ตามโครงสร้างหลังคา', 'สายไฟกระแสตรง (DC) และกระแสสลับ (AC)', 'อุปกรณ์ร้อยสายสำหรับเดินภายนอก'], ''],
+      ['อุปกรณ์เสริมและบริการหลังติดตั้ง', 'bird', ['ตะแกรงกันนกใต้แผง (ตามเงื่อนไขของบริษัท)', 'งานบำรุงรักษาและล้างแผงปีละครั้ง', 'รับประกันงานติดตั้ง 2 ปี'], ''],
+    ] as const;
+    for (let i = 0; i < P.length; i++) { const [title, icon, points, note] = P[i]; await db.insert(records).values({ collection: 'bge_products', value: { title, icon, points: [...points], note, cover: '', gallery: [], order: i + 1, status: 'เผยแพร่' }, idempotencyKey: `seed-product-${i}` }).onConflictDoNothing(); }
+    console.log('products + 6');
+  }
   console.log('seed done');
 }
 main().catch((e) => { console.error(e); process.exit(1); });
