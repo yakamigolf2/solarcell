@@ -1,7 +1,8 @@
 // Client-side renderer for the quotation: draws A4 pages on <canvas> (the browser shapes Thai text correctly),
 // laid out after the reference PDF "ใบเสนอราคาโซลาร์เซลล์_ QO-26080007". Units below are PDF points (A4 = 595 x 842).
 
-export type QuoteRow = { name: string; qty: number; price: number; discount: number; vatPct: number; net: number; details: string[] };
+export type QuoteGroup = { title: string; lines: string[]; warranty?: string };
+export type QuoteRow = { name: string; qty: number; price: number; discount: number; vatPct: number; net: number; details: string[]; groups?: QuoteGroup[] };
 export type QuoteData = {
   seller: { name: string; address: string; taxId: string; phone: string; email: string };
   doc: { docNo: string; issueDate: string; acceptDate: string; validUntil: string; ref: string };
@@ -9,6 +10,7 @@ export type QuoteData = {
   back: { name: string; phone: string; email: string };
   rows: QuoteRow[];
   notes: string[];
+  remark?: string;
   summary: { net: number; vat: number; total: number };
   payments: { label: string; pct: number }[];
   bank: { bank: string; type: string; no: string; name: string };
@@ -125,7 +127,9 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   }
 
   const BODY_BOTTOM = H - 36;
-  const FOOTER_H = 334; // height of summary + payment + remarks + signatures; it only moves to a new page when it no longer fits
+  // height of summary + payment + remarks + signatures; grows with the free-writing remark. It only moves to a new page when it no longer fits.
+  const remarkLines = (() => { const t = (d.remark || '').trim(); if (!t) return [] as string[]; const c = document.createElement('canvas').getContext('2d')!; c.font = `400 9.5px ${fam}`; return wrap(c, t, 440); })();
+  const FOOTER_H = 334 + (remarkLines.length ? remarkLines.length * 12.5 + 8 : 0);
   const colR = { qty: 338, price: 394, disc: 446, vat: 478, net: W - M };
   function tableHeader() {
     rrect(M, y, W - 2 * M, 24, 6, BAND);
@@ -146,12 +150,34 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
     text(fmt2(r.qty), colR.qty, y + 10, { align: 'right' }); text(fmt2(r.price), colR.price, y + 10, { align: 'right' });
     text(fmt2(r.discount), colR.disc, y + 10, { align: 'right' }); text(`${r.vatPct}%`, colR.vat, y + 10, { align: 'right' }); text(fmt2(r.net), colR.net - 2, y + 10, { align: 'right' });
     y += nameLines.length * 14 + 10; hline(y); y += 10;
+    const groups = r.groups || [];
+    if (groups.length) {
+      ensure(30);
+      text('รายละเอียดอุปกรณ์ในชุด (Package Includes)', M + 16, y + 9, { size: 8.5, weight: 600, color: '#3F8A2F' }); y += 18;
+      groups.forEach((g, gi) => {
+        font(10, 600);
+        const head = wrap(ctx, `${String(gi + 1).padStart(2, '0')}. ${g.title}`, 320);
+        font(9.5, 400);
+        const bodies = g.lines.map(l => wrap(ctx, l, 296));
+        const need = head.length * 13 + bodies.reduce((a, b) => a + b.length * 12.5, 0) + (g.warranty ? 14 : 0) + 6;
+        ensure(Math.min(need, 70));
+        head.forEach((l, k) => text(l, M + 16, y + 9 + k * 13, { size: 10, weight: 600 })); y += head.length * 13;
+        bodies.forEach(b => b.forEach((l, k) => {
+          ensure(14);
+          if (k === 0) text('•', M + 24, y + 9, { size: 9.5, color: '#72B65A', weight: 700 });
+          text(l, M + 34, y + 9, { size: 9.5 }); y += 12.5;
+        }));
+        if (g.warranty) { ensure(14); text('•', M + 24, y + 9, { size: 9.5, color: '#72B65A', weight: 700 }); text(`รับประกัน: ${g.warranty}`, M + 34, y + 9, { size: 9.5, weight: 500, color: '#2F6B3A' }); y += 14; }
+        y += 6;
+      });
+      if (r.details.length) { hline(y - 2); y += 8; }
+    }
     r.details.forEach((dt, di) => {
       font(9.5, 400); const ls = wrap(ctx, `${di + 1}. ${dt}`, 300);
       ensure(ls.length * 13 + 2);
       ls.forEach((l, k) => text(l, M + 16, y + 9 + k * 13, { size: 9.5 })); y += ls.length * 13 + 1;
     });
-    if (r.details.length) { y += 6; hline(y); y += 10; }
+    if (r.details.length || groups.length) { y += 6; hline(y); y += 10; }
   });
   d.notes.filter(Boolean).forEach(n => { font(9.5, 400); const ls = wrap(ctx, n, 330); ensure(ls.length * 13 + 8); ls.forEach((l, k) => text(l, M + 16, y + 9 + k * 13, { size: 9.5 })); y += ls.length * 13 + 8; });
 
@@ -175,7 +201,9 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   text('หมายเหตุ', M + 4, fy + 4, { weight: 700 });
   text('เงื่อนไขการชำระเงิน', 92, fy + 4, { color: '#374151' });
   d.payments.forEach((p, i) => text(`(${i + 1}) ${p.label} ชำระ ${p.pct}%`, 92, fy + 19 + i * 13, { color: '#374151' }));
-  fy += 24 + d.payments.length * 13; hline(fy); fy += 14;
+  let ry = fy + 19 + d.payments.length * 13 + 4;
+  remarkLines.forEach(l => { text(l, 92, ry + 6, { size: 9.5, color: '#374151' }); ry += 12.5; });
+  fy += 24 + d.payments.length * 13 + (remarkLines.length ? remarkLines.length * 12.5 + 8 : 0); hline(fy); fy += 14;
   text('รับรอง', M + 4, fy + 4, { weight: 700 });
   const cols = [{ t: 'ผู้ออกเอกสาร (ผู้ขาย)', x: 130 }, { t: 'ผู้อนุมัติเอกสาร (ผู้ขาย)', x: 232 }, { t: 'ตราประทับ (ผู้ขาย)', x: 338 }, { t: 'ผู้รับเอกสาร (ลูกค้า)', x: 428 }];
   cols.forEach(c => text(c.t, c.x, fy + 4, { weight: 600, size: 8.5 }));

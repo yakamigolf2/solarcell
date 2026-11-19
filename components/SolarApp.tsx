@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, LayoutDashboard, Users, ClipboardList, FileText, Wallet, Zap, Settings, Menu, X, Phone, MapPin, Calendar, Eye, Pencil, Trash2, Sun, TrendingUp, Clock, AlertTriangle, CheckCircle2, Circle, Building2, Home, Factory, Briefcase, Save, Camera, Copy, ExternalLink, NotebookPen, LogOut, ShieldCheck, UserCog, Lock, KeyRound, User as UserIcon, Mail, Image as ImageIcon } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { MotionConfig, motion } from 'motion/react';
+import GroupsEditor, { type SpecGroup } from '@/components/admin/GroupsEditor';
 import Combobox from '@/components/admin/Combobox';
 import EquipmentSets from '@/components/admin/EquipmentSets';
 import SetPicker from '@/components/admin/SetPicker';
@@ -34,7 +35,7 @@ async function replaceRow(collection: string, id: string, value: any) { return c
 
 // ---------- Types ----------
 type Status = 'ลีดใหม่' | 'ติดต่อแล้ว' | 'สำรวจหน้างาน' | 'รอเสนอราคา' | 'เสนอราคาแล้ว' | 'ตกลงจ้าง' | 'มัดจำแล้ว' | 'รอติดตั้ง' | 'ติดตั้งแล้ว' | 'ยื่นการไฟฟ้า' | 'ส่งมอบงาน';
-type QuoteItem = { name: string; qty: number; price: number; discount?: number; vatPct?: number; details?: string[] };
+type QuoteItem = { name: string; qty: number; price: number; discount?: number; vatPct?: number; details?: string[]; groups?: SpecGroup[] };
 type Payment = { label: string; pct: number; status: 'ยังไม่โอน' | 'โอนแล้ว' | 'รอตรวจสอบ' | 'ยืนยันแล้ว'; slip: string; due: string };
 type ElecStep = { label: string; done: boolean; date: string; note: string };
 type Contact = { date: string; type: string; note: string };
@@ -49,7 +50,7 @@ type Job = {
   sitePhotos: SitePhoto[]; photoChecklist: ChecklistItem[];
   quoteDocNo?: string; quoteIssueDate?: string; quoteAcceptDate?: string; quoteValidUntil?: string; quoteRef?: string;
   customerTaxId?: string; customerAttn?: string; contactBackName?: string; contactBackPhone?: string; contactBackEmail?: string;
-  quoteNote1?: string; quoteNote2?: string; attachments?: Attachment[];
+  quoteNote1?: string; quoteNote2?: string; quoteRemark?: string; attachments?: Attachment[];
 };
 type Rec = { id: string; value: Job };
 type CompanySettings = { address: string; phone: string; taxId: string; email?: string };
@@ -148,7 +149,7 @@ function normalizeJob(v: any): Job {
     if (typeof base.customerNote !== 'string') base.customerNote = '';
     if (!Array.isArray(base.noteHistory)) base.noteHistory = [];
     if (!Array.isArray(base.items)) base.items = [];
-    base.items = base.items.map((it: any) => ({ ...it, discount: typeof it.discount === 'number' ? it.discount : 0, vatPct: typeof it.vatPct === 'number' ? it.vatPct : 7, details: Array.isArray(it.details) ? it.details : [] }));
+    base.items = base.items.map((it: any) => ({ ...it, discount: typeof it.discount === 'number' ? it.discount : 0, vatPct: typeof it.vatPct === 'number' ? it.vatPct : 7, details: Array.isArray(it.details) ? it.details : [], groups: Array.isArray(it.groups) ? it.groups.map((g: any) => ({ title: String(g?.title || ''), lines: Array.isArray(g?.lines) ? g.lines.map(String) : [], warranty: String(g?.warranty || '') })) : [] }));
     if (typeof base.quoteNote1 !== 'string') base.quoteNote1 = SPEC_QUOTE_NOTE1;
     if (typeof base.quoteNote2 !== 'string') base.quoteNote2 = SPEC_QUOTE_NOTE2;
     return base;
@@ -895,15 +896,16 @@ function QuotePaper({ job, company, quoteNo, onChange, canEdit }: { job: Job; co
     doc: { docNo: doc.docNo, issueDate: doc.issueDate, acceptDate: doc.acceptDate, validUntil: doc.validUntil, ref: doc.ref },
     cust, back,
     rows: [
-      ...(job.items || []).map(it => ({ name: it.name, qty: safeNum(it.qty), price: safeNum(it.price), discount: safeNum(it.discount), vatPct: it.vatPct ?? 7, net: quoteRowNet(it), details: it.details || [] })),
-      ...(job.labor > 0 ? [{ name: 'ค่าแรงติดตั้ง', qty: 1, price: safeNum(job.labor), discount: 0, vatPct: 7, net: safeNum(job.labor), details: [] as string[] }] : []),
+      ...(job.items || []).map(it => ({ name: it.name, qty: safeNum(it.qty), price: safeNum(it.price), discount: safeNum(it.discount), vatPct: it.vatPct ?? 7, net: quoteRowNet(it), details: (it.details || []).filter(d => String(d).trim()), groups: (it.groups || []).map(g => ({ title: g.title, lines: g.lines.filter(l => l.trim()), warranty: g.warranty || '' })).filter(g => g.title.trim() || g.lines.length || g.warranty) })),
+      ...(job.labor > 0 ? [{ name: 'ค่าแรงติดตั้ง', qty: 1, price: safeNum(job.labor), discount: 0, vatPct: 7, net: safeNum(job.labor), details: [] as string[], groups: [] as SpecGroup[] }] : []),
     ],
     notes: [job.quoteNote1 ?? SPEC_QUOTE_NOTE1, job.quoteNote2 ?? SPEC_QUOTE_NOTE2],
+    remark: job.quoteRemark || '',
     summary: { net: qs.net, vat: qs.vat, total: qs.total },
     payments: pays.map(p => ({ label: String(p.label).split('•')[0].trim() + (String(p.label).includes('•') ? ' ' + String(p.label).split('•')[1].trim() : ''), pct: p.pct })),
     bank: SPEC_BANK,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [JSON.stringify([job.items, job.labor, job.discount, job.quoteNote1, job.quoteNote2, job.payments, doc, cust, back, seller])]);
+  }), [JSON.stringify([job.items, job.labor, job.discount, job.quoteNote1, job.quoteNote2, job.quoteRemark, job.payments, doc, cust, back, seller])]);
   const quoteText = safe(() => {
     const lines: string[] = [`ใบเสนอราคา เลขที่ ${doc.docNo} วันที่ออก ${doc.issueDate} ใช้ได้ถึง ${doc.validUntil}`, `ลูกค้า ${cust.name} ที่อยู่ ${cust.address} เบอร์ ${cust.phone}`];
     (job.items || []).forEach((it, i) => { lines.push(`${i + 1}. ${it.name} จำนวน ${fmtQty(it.qty)} ราคา ${fmt2(it.price)} ส่วนลด ${fmt2(it.discount || 0)} มูลค่าก่อนภาษี ${fmt2(quoteRowNet(it))}`); (it.details || []).forEach((d, di) => lines.push(`  ${di + 1}. ${d}`)); });
@@ -963,8 +965,9 @@ function QuoteEditor({ job, onChange, onOpenQuote, catalog, canEdit }: { job: Jo
       {addedMsg && <p className="text-[13px] text-emerald-700 mt-2">{addedMsg}</p>}
       <button type="button" disabled={!canEdit} onClick={handleAdd} className="mt-3 w-full sm:w-auto bg-[var(--primary)] text-white px-5 py-2.5 rounded-full font-bold text-[13px] disabled:opacity-50">+ เพิ่มลงใบเสนอราคา</button>
     </div>
-    <div className="space-y-2">{(job.items || []).map((it, i) => <div key={i} className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-2xl p-3"><div className="flex-1 min-w-[180px]"><input disabled={!canEdit} value={it.name} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], name: e.target.value }; onChange({ items: n }); }} className="w-full px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" />{(it.details || []).length > 0 && <p className="text-[11px] text-gray-500 mt-1">มีรายละเอียด {(it.details || []).length} ข้อ</p>}</div><input type="number" disabled={!canEdit} value={it.qty} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], qty: Number(e.target.value) }; onChange({ items: n }); }} className="w-[70px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" /><input type="number" disabled={!canEdit} value={it.price} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], price: Number(e.target.value) }; onChange({ items: n }); }} className="w-[120px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" /><input type="number" disabled={!canEdit} value={it.discount || 0} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], discount: Number(e.target.value) }; onChange({ items: n }); }} className="w-[110px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" placeholder="ส่วนลด" />{canEdit && <button type="button" onClick={() => { try { onChange({ items: job.items.filter((_, x) => x !== i) }); } catch { /* ignore */ } }} className="p-2 rounded-full bg-red-50 text-red-600" aria-label="ลบรายการ"><Trash2 size={15} /></button>}</div>)}
+    <div className="space-y-2">{(job.items || []).map((it, i) => <div key={i} className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-2xl p-3"><div className="flex-1 min-w-[180px]"><input disabled={!canEdit} value={it.name} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], name: e.target.value }; onChange({ items: n }); }} className="w-full px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" />{(it.details || []).length > 0 && <p className="text-[11px] text-gray-500 mt-1">มีรายละเอียด {(it.details || []).length} ข้อ</p>}</div><input type="number" disabled={!canEdit} value={it.qty} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], qty: Number(e.target.value) }; onChange({ items: n }); }} className="w-[70px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" /><input type="number" disabled={!canEdit} value={it.price} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], price: Number(e.target.value) }; onChange({ items: n }); }} className="w-[120px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" /><input type="number" disabled={!canEdit} value={it.discount || 0} onChange={e => { const n = [...job.items]; n[i] = { ...n[i], discount: Number(e.target.value) }; onChange({ items: n }); }} className="w-[110px] px-2 py-1.5 border rounded-lg text-[13px] bg-white disabled:bg-gray-100" placeholder="ส่วนลด" />{canEdit && <button type="button" onClick={() => { try { onChange({ items: job.items.filter((_, x) => x !== i) }); } catch { /* ignore */ } }} className="p-2 rounded-full bg-red-50 text-red-600" aria-label="ลบรายการ"><Trash2 size={15} /></button>}<details className="basis-full w-full" open={(it.groups || []).length > 0}><summary className="cursor-pointer text-[12px] font-semibold text-[var(--primary)] select-none">รายละเอียดอุปกรณ์ในชุด (Package Includes){(it.groups || []).length > 0 ? ` — ${(it.groups || []).length} รายการ` : ''}</summary><div className="mt-2"><GroupsEditor disabled={!canEdit} groups={it.groups || []} onChange={g => { const n = [...job.items]; n[i] = { ...n[i], groups: g }; onChange({ items: n }); }} /></div></details></div>)}
     </div>
+    <div className="mt-3"><label className={labelE} htmlFor="q-remark">หมายเหตุท้ายใบเสนอราคา (เขียนอิสระ)</label><textarea id="q-remark" disabled={!canEdit} rows={3} value={job.quoteRemark || ''} onChange={e => onChange({ quoteRemark: e.target.value })} className={inputE} placeholder="เช่น เงื่อนไขการรับประกัน การเปลี่ยนอุปกรณ์ หรือข้อตกลงอื่น ๆ" /></div>
     <div className="grid sm:grid-cols-2 gap-3 mt-3"><div><label className={labelE}>ค่าแรงติดตั้ง</label><input type="number" disabled={!canEdit} value={job.labor} onChange={e => onChange({ labor: Number(e.target.value) })} className={inputE} /></div><div><label className={labelE}>ส่วนลดรวม</label><input type="number" disabled={!canEdit} value={job.discount} onChange={e => onChange({ discount: Number(e.target.value) })} className={inputE} /></div></div>
     <button type="button" onClick={onOpenQuote} className="w-full mt-4 bg-[var(--dark)] text-white py-3 rounded-full font-bold text-[13px]">เปิดใบเสนอราคาแบบเต็ม</button>
   </div>;

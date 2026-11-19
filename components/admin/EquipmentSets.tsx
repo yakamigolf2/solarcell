@@ -1,9 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Combobox from './Combobox';
+import GroupsEditor, { type SpecGroup } from './GroupsEditor';
 import { Layers, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
-export type SetLine = { name: string; qty: number; price: number; discount: number; details: string[] };
+export type SetLine = { name: string; qty: number; price: number; discount: number; details: string[]; groups?: SpecGroup[] };
 export type EquipmentSet = { name: string; note: string; items: SetLine[] };
 export type SetRec = { id: string; value: EquipmentSet };
 type CatalogRow = { name: string; price: number; code: string; category: string };
@@ -44,7 +45,7 @@ export default function EquipmentSets({ catalog, canEdit }: { catalog: CatalogRo
   const addFromCatalog = (name: string) => {
     if (!form || !name) return;
     const c = catalog.find(x => x.name === name);
-    setForm({ ...form, items: [...form.items, { name, qty: 1, price: c?.price ?? 0, discount: 0, details: [] }] }); setPick('');
+    setForm({ ...form, items: [...form.items, { name, qty: 1, price: c?.price ?? 0, discount: 0, details: [], groups: [] }] }); setPick('');
   };
 
   async function save(e: React.FormEvent) {
@@ -94,7 +95,8 @@ export default function EquipmentSets({ catalog, canEdit }: { catalog: CatalogRo
                   <div className="text-[13px] font-semibold min-w-[90px] text-right">{baht(lineTotal(l))}</div>
                   <button type="button" aria-label="ลบรายการ" onClick={() => setForm({ ...form, items: form.items.filter((_, k) => k !== i) })} className="p-2 rounded-full hover:bg-white text-rose-600"><Trash2 size={15} /></button>
                 </div>
-                <textarea aria-label="รายละเอียดในใบเสนอราคา" value={l.details.join('\n')} onChange={e => setLine(i, { details: e.target.value.split('\n') })} rows={l.details.length > 1 ? Math.min(6, l.details.length) : 1} className={input} placeholder="รายละเอียดที่จะแสดงใต้รายการในใบเสนอราคา (บรรทัดละ 1 ข้อ — ไม่บังคับ)" />
+                <details open={(l.groups || []).length > 0}><summary className="cursor-pointer text-[12px] font-semibold text-[var(--primary)] select-none">อุปกรณ์ในชุด (Package Includes){(l.groups || []).length ? ` — ${(l.groups || []).length} รายการ` : ''}</summary><div className="mt-2"><GroupsEditor groups={l.groups || []} onChange={g => setLine(i, { groups: g })} /></div></details>
+                <textarea aria-label="รายละเอียดเพิ่มเติมแบบอิสระ" value={l.details.join('\n')} onChange={e => setLine(i, { details: e.target.value.split('\n') })} rows={l.details.length > 1 ? Math.min(6, l.details.length) : 1} className={input} placeholder="รายละเอียดเพิ่มเติมแบบอิสระ (บรรทัดละ 1 ข้อ — ไม่บังคับ)" />
               </div>))}
           </div>
 
