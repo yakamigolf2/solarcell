@@ -66,3 +66,11 @@ export const NEWS = [
 
 export const PROJECT_TYPES = ['บ้านพักอาศัย', 'อาคารพาณิชย์', 'โรงงาน', 'อื่น ๆ'];
 export const BUILDINGS = ['บ้านพักอาศัย', 'อาคารพาณิชย์ / สำนักงาน', 'โรงงาน / อุตสาหกรรม', 'อื่น ๆ'];
+
+// Customer logos shown on the home page. Drop new files in public/clients and add a row here.
+export const CLIENTS = [
+  { name: 'MG', src: '/clients/mg.png', w: 107, h: 102 },
+  { name: '7-Eleven', src: '/clients/7-eleven.png', w: 93, h: 124 },
+  { name: 'Cafe Amazon', src: '/clients/cafe-amazon.png', w: 164, h: 124 },
+  { name: 'เทศบาล', src: '/clients/seal.png', w: 123, h: 123 },
+];

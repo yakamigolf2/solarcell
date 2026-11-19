@@ -13,10 +13,9 @@ export default function Hero() {
   const cardY = useTransform(scrollYProgress, [0, 1], [0, -40]);
   return (
     <section ref={ref} className="relative -mt-[76px] pt-[120px] pb-24 overflow-hidden min-h-[640px]">
-      <div aria-hidden className="absolute inset-0 -z-10">
+      <div aria-hidden className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,#000_72%,transparent)]">
         <motion.div style={{ y: sceneY }} className="absolute inset-x-0 -top-10 -bottom-16"><Image src="/hero-bg.jpg" alt="" fill priority sizes="100vw" className="object-cover object-[70%_center]" /></motion.div>
         <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/45 to-transparent lg:from-white/80 lg:via-white/30" />
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F8FAFC] to-transparent" />
       </div>
       <div className="max-w-[1200px] mx-auto px-5 grid lg:grid-cols-2 gap-10 items-center">
         <div>

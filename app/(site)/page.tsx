@@ -8,7 +8,8 @@ import NewsCard from '@/components/site/NewsCard';
 import ProjectCard from '@/components/site/ProjectCard';
 import { getPublishedNews } from '@/lib/news';
 import { getPublishedProjects } from '@/lib/projects';
-import { SOLUTIONS, TESTIMONIALS, WHY } from '@/lib/site-data';
+import Image from 'next/image';
+import { CLIENTS, SOLUTIONS, TESTIMONIALS, WHY } from '@/lib/site-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,16 @@ export default async function Home() {
   return (
     <>
       <Hero />
+
+      <section className="max-w-[1200px] mx-auto px-5 pt-14" aria-labelledby="clients-title">
+        <Reveal className="text-center">
+          <h2 id="clients-title" className="inline-block rounded-full bg-white/90 border border-[var(--line)] shadow-sm px-8 py-2.5 text-[22px] sm:text-[26px] font-medium text-[#3B1A7A]">ลูกค้าของเรา</h2>
+        </Reveal>
+        <Stagger className="mt-9 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8 items-center justify-items-center">
+          {CLIENTS.map(c => (
+            <RevealItem key={c.name}><div className="lift h-[110px] flex items-center justify-center"><Image src={c.src} alt={c.name} width={c.w} height={c.h} className="max-h-[96px] w-auto object-contain" /></div></RevealItem>))}
+        </Stagger>
+      </section>
 
       <section className="max-w-[1200px] mx-auto px-5 pt-20">
         <SectionTitle eyebrow="Our solutions" title="โซลูชันที่ออกแบบให้เหมาะกับคุณ" text="ไม่ว่าจะเป็นบ้าน อาคาร หรือโรงงาน เราออกแบบระบบตามการใช้ไฟและพื้นที่หลังคาจริง" />
