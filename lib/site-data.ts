@@ -1,4 +1,4 @@
-import { Activity, BatteryCharging, Bird, Building2, Cable, Calculator, Cpu, Factory, Home, HardHat, HeartHandshake, MessageCircle, ScanSearch, ShieldCheck, Sun, Zap, type LucideIcon } from 'lucide-react';
+import { BatteryCharging, Bird, Building2, Cable, Cpu, Factory, Home, HardHat, MapPin, MessageCircle, Monitor, ShieldCheck, Sun, TrendingUp, Wrench, Zap, type LucideIcon } from 'lucide-react';
 
 // Company facts come from the existing quotation template. Projects, testimonials and news below are SAMPLE content —
 // replace with real material before launch.
@@ -29,12 +29,12 @@ export const SOLUTIONS: { slug: string; title: string; icon: LucideIcon; text: s
 ];
 
 export const SERVICES: { title: string; text: string; icon: LucideIcon }[] = [
-  { title: 'ปรึกษาและประเมินความต้องการ', text: 'ฟังการใช้ไฟและเป้าหมายของคุณ แล้วแนะนำระบบที่เหมาะสม ไม่เกินความจำเป็น', icon: MessageCircle },
-  { title: 'สำรวจหน้างานและวิเคราะห์ทิศทางแสง', text: 'ประเมินหลังคา ทิศทาง ร่มเงา และโครงสร้าง เพื่อวางตำแหน่งแผงให้ได้ผลผลิตสูงสุด', icon: ScanSearch },
-  { title: 'ประเมินความคุ้มค่าและแผนคืนทุน', text: 'คำนวณค่าไฟที่ประหยัดได้และระยะเวลาคืนทุนอย่างโปร่งใส ก่อนตัดสินใจ', icon: Calculator },
-  { title: 'ออกแบบและติดตั้งโดยทีมช่าง', text: 'ติดตั้งตามมาตรฐานความปลอดภัย พร้อมทดสอบระบบก่อนส่งมอบ และยื่นเอกสารการไฟฟ้าให้', icon: HardHat },
-  { title: 'ติดตามผลผลิตไฟ', text: 'ระบบมอนิเตอร์ช่วยดูปริมาณไฟที่ผลิตได้ และตรวจพบความผิดปกติได้เร็ว', icon: Activity },
-  { title: 'ดูแลหลังการขายระยะยาว', text: 'บำรุงรักษา ล้างแผง และแก้ปัญหาหลังการติดตั้ง ตามเงื่อนไขในใบเสนอราคา', icon: HeartHandshake },
+  { title: 'ให้คำปรึกษา ตรงไปตรงมา', text: 'ฟังการใช้ไฟและเป้าหมายของคุณ แล้วแนะนำระบบที่เหมาะสม ไม่เกินความจำเป็น', icon: MessageCircle },
+  { title: 'สำรวจหน้างาน วิเคราะห์ทิศทางแสง', text: 'ประเมินหลังคา ทิศทาง ร่มเงา และโครงสร้าง เพื่อวางตำแหน่งแผงให้ได้ผลผลิตสูงสุด', icon: MapPin },
+  { title: 'ประเมินผลตอบแทน พร้อมแผนการคืนทุน', text: 'คำนวณค่าไฟที่ประหยัดได้และระยะเวลาคืนทุนอย่างโปร่งใส ก่อนตัดสินใจ', icon: TrendingUp },
+  { title: 'ออกแบบ และติดตั้งโดยวิศวกร', text: 'ติดตั้งตามมาตรฐานความปลอดภัย พร้อมทดสอบระบบก่อนส่งมอบ และยื่นเอกสารการไฟฟ้าให้', icon: HardHat },
+  { title: 'ติดตามระบบ และรายงานผลผลิตไฟฟ้า', text: 'ระบบมอนิเตอร์ช่วยดูปริมาณไฟที่ผลิตได้ และตรวจพบความผิดปกติได้เร็ว', icon: Monitor },
+  { title: 'บริการดูแลหลังการขายระยะยาว', text: 'บำรุงรักษา ล้างแผง และแก้ปัญหาหลังการติดตั้ง ตามเงื่อนไขในใบเสนอราคา', icon: Wrench },
 ];
 
 export const SYSTEMS: { title: string; range: string; text: string; icon: LucideIcon; tone: string }[] = [
