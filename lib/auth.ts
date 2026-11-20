@@ -8,6 +8,12 @@ export const JOBS = 'solarpro_jobs';
 export const COMPANY = 'bge_company_settings';
 const COOKIE = 'sid';
 const MAX_AGE = 60 * 60 * 24 * 7;
+export const MIN_PASSWORD = 8;
+export const MAX_LOGIN_FAILS = 5;
+export const LOCK_MINUTES = 15;
+
+/** Tail of the bcrypt hash: changing a password changes it, which ends every session issued before. */
+const pwVersion = (hash: unknown) => String(hash || '').slice(-12);
 
 export type SessionUser = { id: string; value: Record<string, any> };
 
@@ -17,8 +23,8 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-export async function startSession(userId: string) {
-  const token = await new SignJWT({}).setProtectedHeader({ alg: 'HS256' }).setSubject(userId).setIssuedAt().setExpirationTime(`${MAX_AGE}s`).sign(secret());
+export async function startSession(userId: string, passwordHash: string) {
+  const token = await new SignJWT({ pv: pwVersion(passwordHash) }).setProtectedHeader({ alg: 'HS256' }).setSubject(userId).setIssuedAt().setExpirationTime(`${MAX_AGE}s`).sign(secret());
   (await cookies()).set(COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: MAX_AGE });
 }
 export async function endSession() { (await cookies()).delete(COOKIE); }
@@ -33,6 +39,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const rows = await getDb().select().from(schema.records).where(and(eq(schema.records.id, payload.sub), eq(schema.records.collection, USERS))).limit(1);
     const u = rows[0];
     if (!u || u.value.status !== 'ใช้งาน') return null;
+    if (payload.pv !== pwVersion(u.value.password)) return null;
     return { id: u.id, value: u.value };
   } catch { return null; }
 }
@@ -42,7 +49,10 @@ export function can(user: SessionUser, ...keys: string[]) {
   return keys.some((k) => user.value.permissions?.[k] ?? ((k === 'news_manage' || k === 'projects_manage' || k === 'products_manage' || k === 'clients_manage') && user.value.role === 'Admin'));
 }
 
-export function publicUser(u: SessionUser) { return { id: u.id, value: { ...u.value, password: '' } }; }
+export function publicUser(u: SessionUser) {
+  const { loginFails: _f, lockedUntil: _l, ...value } = u.value;
+  return { id: u.id, value: { ...value, password: '' } };
+}
 
 export async function findUserByUsername(username: string) {
   const rows = await getDb().select().from(schema.records).where(and(eq(schema.records.collection, USERS), sql`lower(${schema.records.value}->>'username') = ${username.toLowerCase()}`)).limit(1);

@@ -6,7 +6,7 @@ import { NEWS_COLLECTION } from '@/lib/news';
 import { PROJECTS_COLLECTION } from '@/lib/projects';
 import { PRODUCTS_COLLECTION } from '@/lib/products';
 import { CLIENTS_COLLECTION } from '@/lib/clients';
-import { can, COMPANY, getSessionUser, JOBS, type SessionUser, USERS } from '@/lib/auth';
+import { can, COMPANY, getSessionUser, JOBS, MIN_PASSWORD, type SessionUser, USERS } from '@/lib/auth';
 
 const r = schema.records;
 type Args = Record<string, any>;
@@ -36,13 +36,41 @@ function authorize(user: SessionUser, action: string, collection: string) {
   return false;
 }
 
-async function prepareUserValue(value: Args, existingHash?: string) {
+async function prepareUserValue(value: Args, current?: Args) {
   const next = { ...value };
-  if (typeof next.password === 'string' && next.password) next.password = await bcrypt.hash(next.password, 10);
-  else next.password = existingHash || '';
+  if (typeof next.password === 'string' && next.password) {
+    if (next.password.length < MIN_PASSWORD) throw new HttpError(400, `รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD} ตัวอักษร`);
+    next.password = await bcrypt.hash(next.password, 10);
+  } else next.password = current?.password || '';
+  // Lockout counters are server-owned; a stale admin form must not reset or forge them.
+  next.loginFails = current?.loginFails ?? 0;
+  next.lockedUntil = current?.lockedUntil ?? null;
   return next;
 }
-const strip = (collection: string, rec: { id: string; value: Args }) => (collection === USERS ? { id: rec.id, value: { ...rec.value, password: '' } } : { id: rec.id, value: rec.value });
+
+/** Keep fields the user has no permission to change, so a crafted request can't bypass what the UI hides. */
+function guardJobValue(user: SessionUser, current: Args, next: Args) {
+  const out = { ...next };
+  if (!can(user, 'orders_change_status')) out.status = current.status;
+  const curPays: Args[] = Array.isArray(current.payments) ? current.payments : [];
+  if (!can(user, 'finance_edit_installments')) {
+    const nextPays: Args[] = Array.isArray(out.payments) ? out.payments : [];
+    out.payments = curPays.map((p, i) => ({ ...p, ...(nextPays[i] || {}), label: p.label, pct: p.pct, due: p.due }));
+  }
+  if (!can(user, 'finance_confirm')) {
+    const pays: Args[] = Array.isArray(out.payments) ? out.payments : [];
+    out.payments = pays.map((p, i) => {
+      if (curPays[i]?.status === 'ยืนยันแล้ว') return { ...curPays[i] };
+      return p.status === 'ยืนยันแล้ว' ? { ...p, status: curPays[i]?.status || 'รอตรวจสอบ' } : p;
+    });
+  }
+  return out;
+}
+const strip = (collection: string, rec: { id: string; value: Args }) => {
+  if (collection !== USERS) return { id: rec.id, value: rec.value };
+  const { loginFails: _f, lockedUntil: _l, ...value } = rec.value;
+  return { id: rec.id, value: { ...value, password: '' } };
+};
 
 async function run(user: SessionUser, action: string, args: Args) {
   const db = getDb();
@@ -64,7 +92,9 @@ async function run(user: SessionUser, action: string, args: Args) {
     const key = typeof args.idempotency_key === 'string' ? args.idempotency_key : null;
     const [row] = await db.insert(r).values({ collection, value, idempotencyKey: key }).onConflictDoNothing().returning();
     if (!row) {
-      const [existing] = await db.select().from(r).where(eq(r.idempotencyKey, key!)).limit(1);
+      // Only replay a record from the same collection: a key from another collection (e.g. seed-user-admin) must not leak that record.
+      const [existing] = key ? await db.select().from(r).where(and(eq(r.idempotencyKey, key), eq(r.collection, collection))).limit(1) : [];
+      if (!existing) throw new HttpError(409, 'idempotency_key ซ้ำ');
       return strip(collection, existing);
     }
     return strip(collection, row);
@@ -76,7 +106,9 @@ async function run(user: SessionUser, action: string, args: Args) {
 
   if (action === 'records.replace') {
     if (!args.value || typeof args.value !== 'object') throw new HttpError(400, 'value required');
-    const value = collection === USERS ? await prepareUserValue(args.value, current.value.password) : args.value;
+    const value = collection === USERS ? await prepareUserValue(args.value, current.value)
+      : collection === JOBS ? guardJobValue(user, current.value, args.value)
+      : args.value;
     const [row] = await db.update(r).set({ value, updatedAt: new Date() }).where(eq(r.id, id)).returning();
     return strip(collection, row);
   }

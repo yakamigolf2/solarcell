@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { records } from '../db/schema';
@@ -15,8 +16,10 @@ async function main() {
   const have = new Set(users.map((u) => String(u.value.username).toLowerCase()));
   for (const u of SAMPLE_USERS) {
     if (have.has(u.username.toLowerCase())) continue;
-    await db.insert(records).values({ collection: 'solarpro_users', value: { ...u, password: await bcrypt.hash(u.password, 10) }, idempotencyKey: `seed-user-${u.username}` }).onConflictDoNothing();
-    console.log('user +', u.username);
+    // Never a fixed password: each seeded user gets a random one, printed once here.
+    const password = randomBytes(9).toString('base64url');
+    await db.insert(records).values({ collection: 'solarpro_users', value: { ...u, password: await bcrypt.hash(password, 10) }, idempotencyKey: `seed-user-${u.username}` }).onConflictDoNothing();
+    console.log('user +', u.username, 'password:', password);
   }
   const jobs = await db.select().from(records).where(eq(records.collection, 'solarpro_jobs'));
   if (jobs.length === 0) {
