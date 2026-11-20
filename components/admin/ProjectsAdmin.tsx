@@ -5,7 +5,7 @@ import { uploadImage } from '@/lib/upload';
 import { PROJECT_TYPES } from '@/lib/site-data';
 
 type Project = { title: string; place: string; type: string; kw: number; text: string; cover: string; status: 'เผยแพร่' | 'แบบร่าง'; panelBrand?: string; inverterBrand?: string };
-type Rec = { id: string; value: Project };
+type Rec = { id: string; value: Project; updatedAt?: string };
 const COLLECTION = 'bge_projects';
 const empty = (): Project => ({ title: '', place: '', type: PROJECT_TYPES[0], kw: 0, text: '', cover: '', status: 'แบบร่าง' });
 const input = 'w-full px-3 py-2.5 rounded-xl border border-[var(--line2)] bg-white/80 text-[14px]';
@@ -38,7 +38,7 @@ export default function ProjectsAdmin() {
     if (!form.title.trim()) { setMsg('กรุณากรอกชื่อโครงการ'); return; }
     setBusy(true); setMsg(null);
     try {
-      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value: form });
+      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value: form, expected_updated_at: (items || []).find(x => x.id === editId)?.updatedAt });
       else await api('records.create', { collection: COLLECTION, value: form, idempotency_key: `project-${Date.now()}` });
       setForm(null); setEditId(null); setMsg(form.status === 'เผยแพร่' ? 'บันทึกและเผยแพร่แล้ว' : 'บันทึกแบบร่างแล้ว'); await load();
     } catch (err) { setMsg('บันทึกไม่สำเร็จ: ' + errText(err)); }
@@ -49,7 +49,7 @@ export default function ProjectsAdmin() {
     setConfirmId(null);
   }
   async function toggle(r: Rec) {
-    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' } }); await load(); }
+    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' }, expected_updated_at: r.updatedAt }); await load(); }
     catch (err) { setMsg('เปลี่ยนสถานะไม่สำเร็จ: ' + errText(err)); }
   }
   async function pickCover(f: File | undefined) {

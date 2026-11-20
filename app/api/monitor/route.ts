@@ -6,6 +6,7 @@ import { getSessionUser } from '@/lib/auth';
 import { listBackups } from '@/lib/backup';
 import { ERRORS, type ErrorEntry } from '@/lib/errors';
 import { lineConfigured } from '@/lib/notify';
+import { slipOkConfigured, slipOkQuota } from '@/lib/slipok';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,7 @@ async function backups() {
   const all = await listBackups();
   return {
     configured: !!process.env.BACKUP_KEY, cron: !!process.env.CRON_SECRET, line: lineConfigured(),
+    slipOk: slipOkConfigured(), slipOkQuota: await slipOkQuota(),
     count: all.length, latest: all[0] ? { at: all[0].uploadedAt, size: all[0].size } : null,
     items: all.slice(0, 10).map((b) => ({ at: b.uploadedAt, size: b.size, pathname: b.pathname })),
   };

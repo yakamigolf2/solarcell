@@ -50,8 +50,8 @@ export function can(user: SessionUser, ...keys: string[]) {
 }
 
 export function publicUser(u: SessionUser) {
-  const { loginFails: _f, lockedUntil: _l, ...value } = u.value;
-  return { id: u.id, value: { ...value, password: '' } };
+  const { loginFails: _f, lockedUntil: _l, lineUserId, ...value } = u.value;
+  return { id: u.id, value: { ...value, password: '', lineLinked: !!lineUserId } };
 }
 
 export async function findUserByUsername(username: string) {

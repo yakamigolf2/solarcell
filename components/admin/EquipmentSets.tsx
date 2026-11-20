@@ -6,7 +6,7 @@ import { Layers, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
 export type SetLine = { name: string; qty: number; price: number; discount: number; details: string[]; groups?: SpecGroup[] };
 export type EquipmentSet = { name: string; note: string; items: SetLine[] };
-export type SetRec = { id: string; value: EquipmentSet };
+export type SetRec = { id: string; value: EquipmentSet; updatedAt?: string };
 type CatalogRow = { name: string; price: number; code: string; category: string };
 
 export const SETS_COLLECTION = 'bge_equipment_sets';
@@ -57,7 +57,7 @@ export default function EquipmentSets({ catalog, canEdit }: { catalog: CatalogRo
     setBusy(true); setMsg(null);
     const value: EquipmentSet = { ...form, name: form.name.trim(), items: items.map(l => ({ ...l, name: l.name.trim(), qty: Math.max(0, Number(l.qty) || 0), price: Math.max(0, Number(l.price) || 0), discount: Math.max(0, Number(l.discount) || 0) })) };
     try {
-      if (editId) await setsApi('records.replace', { collection: SETS_COLLECTION, id: editId, value });
+      if (editId) await setsApi('records.replace', { collection: SETS_COLLECTION, id: editId, value, expected_updated_at: (sets || []).find(x => x.id === editId)?.updatedAt });
       else await setsApi('records.create', { collection: SETS_COLLECTION, value, idempotency_key: `set-${Date.now()}` });
       setForm(null); setEditId(null); setMsg('บันทึกเซ็ตอุปกรณ์แล้ว'); await load();
     } catch (err) { setMsg('บันทึกไม่สำเร็จ: ' + errText(err)); }

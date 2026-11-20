@@ -17,6 +17,13 @@ export const STATUS_GROUPS: { name: string; statuses: Status[] }[] = [
   { name: 'ไม่สำเร็จ', statuses: ['ปฏิเสธการจ้าง', 'ยื่นกู้ไม่ผ่าน'] },
 ];
 
+/** Jobs that are finished or lost; hidden by default in lists. */
+export const CLOSED_STATUSES: Status[] = ['ยื่นการไฟฟ้าแล้วเสร็จ', 'ปฏิเสธการจ้าง', 'ยื่นกู้ไม่ผ่าน'];
+
+/** Where a lead came from, for the lead-source report. Website-form leads are tagged automatically. */
+export const LEAD_SOURCES = ['เว็บไซต์', 'Facebook', 'LINE', 'แนะนำต่อ', 'โทรเข้า', 'Walk-in / หน้าร้าน', 'อื่นๆ'] as const;
+export const leadSourceOf = (v: { leadSource?: unknown; source?: unknown }) => String(v.leadSource || (v.source === 'website' ? 'เว็บไซต์' : '') || 'ไม่ระบุ');
+
 export const PAYMENT_STATUSES = ['ยังไม่โอน', 'โอนแล้ว', 'รอตรวจสอบ', 'ยืนยันแล้ว'] as const;
 
 /** Fields that make up the quoted price; locked once the quotation is approved. */
@@ -86,6 +93,11 @@ export const jobSchema = z.looseObject({
   items: z.array(item).max(300).optional(),
   payments: z.array(payment).max(24).optional(),
   quoteApproval: z.looseObject({ byId: z.string(), by: z.string(), at: z.string() }).nullable().optional(),
+  saleId: text(64).optional(), saleName: text(200).optional(),
+  techId: text(64).optional(), techName: text(200).optional(),
+  installDate: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'วันติดตั้งไม่ถูกต้อง')]).optional(),
+  installDays: z.number().int().min(1).max(60).optional(),
+  leadSource: z.union([z.literal(''), z.enum(LEAD_SOURCES)]).optional(),
 });
 
 export const userSchema = z.looseObject({

@@ -57,7 +57,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               <li className="flex gap-2"><Phone size={16} className="shrink-0 mt-0.5" /><a href={COMPANY.phoneHref} className="hover:text-white">{COMPANY.phone}</a></li>
               <li className="flex gap-2"><Mail size={16} className="shrink-0 mt-0.5" /><a href={`mailto:${COMPANY.email}`} className="hover:text-white break-all">{COMPANY.email}</a></li></ul></div>
           </div>
-          <div className="border-t border-white/10 py-5 text-center text-[12px] text-white/50">© {new Date().getFullYear()} {COMPANY.legalEn} • <Link href="/admin" className="hover:text-white/80">สำหรับพนักงาน</Link></div>
+          <div className="border-t border-white/10 py-5 text-center text-[12px] text-white/50">© {new Date().getFullYear()} {COMPANY.legalEn}</div>
         </footer>
       </div>
     </MotionConfig>

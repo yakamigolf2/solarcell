@@ -7,7 +7,7 @@ type Db = { bytes: number; limitBytes: number; connections: number; cacheHitPct:
 type Cpu = { available: false; reason: string } | { available: true; cpuSeconds: number; computeHours: number; activeHours: number; limitHours: number; storageBytes: number | null; periodStart: string | null; periodEnd: string | null };
 type Blob = { bytes: number; files: number; limitBytes: number; folders: { name: string; files: number; bytes: number }[] };
 type Err = { last24h: number; items: { fingerprint: string; message: string; source: string; url: string; user: string; lastAt: string; count: number; stack: string }[] };
-type Bk = { configured: boolean; cron: boolean; line: boolean; count: number; latest: { at: string; size: number } | null; items: { at: string; size: number; pathname: string }[] };
+type Bk = { configured: boolean; cron: boolean; line: boolean; slipOk: boolean; slipOkQuota: { quota: number; specialQuota: number; overQuota: number } | null; count: number; latest: { at: string; size: number } | null; items: { at: string; size: number; pathname: string }[] };
 type Data = { checkedAt: string; db: Part<Db>; cpu: Part<Cpu>; blob: Part<Blob>; errors: Part<Err>; backups: Part<Bk> };
 
 const fmtBytes = (b: number) => {
@@ -132,6 +132,7 @@ export default function SystemMonitor() {
                 <li>{data.backups.data.configured ? '✅' : '⚠️'} คีย์เข้ารหัส (BACKUP_KEY)</li>
                 <li>{data.backups.data.cron ? '✅' : '⚠️'} สำรองอัตโนมัติทุกวัน 08:00 (CRON_SECRET)</li>
                 <li>{data.backups.data.line ? '✅' : '⚠️'} แจ้งเตือน LINE (LINE_CHANNEL_ACCESS_TOKEN, LINE_TO)</li>
+                <li>{data.backups.data.slipOk ? '✅' : '⚠️'} ตรวจสลิป SlipOK{data.backups.data.slipOkQuota ? ` • เหลือ ${fmtNum(data.backups.data.slipOkQuota.quota + data.backups.data.slipOkQuota.specialQuota, 0)} สลิป${data.backups.data.slipOkQuota.overQuota ? ` (เกินโควตา ${fmtNum(data.backups.data.slipOkQuota.overQuota, 0)})` : ''}` : data.backups.data.slipOk ? '' : ' (SLIPOK_BRANCH_ID, SLIPOK_API_KEY)'}</li>
               </ul>
               <button onClick={backupNow} disabled={!data.backups.data.configured} className="self-start px-4 py-2 rounded-full bg-[var(--primary)] text-white text-[13px] font-bold disabled:opacity-50">สำรองข้อมูลตอนนี้</button>
               {backupMsg && <p className="text-[13px] text-gray-600">{backupMsg}</p>}

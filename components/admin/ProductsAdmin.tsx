@@ -5,7 +5,7 @@ import { uploadImage } from '@/lib/upload';
 import { PRODUCT_ICONS } from '@/lib/product-icons';
 
 type Product = { title: string; icon: string; points: string[]; note: string; cover: string; gallery: string[]; order: number; status: 'เผยแพร่' | 'แบบร่าง'; brand?: string; model?: string; capacity?: string; warranty?: string; price?: string };
-type Rec = { id: string; value: Product };
+type Rec = { id: string; value: Product; updatedAt?: string };
 const COLLECTION = 'bge_products';
 const MAX_GALLERY = 8;
 const input = 'w-full px-3 py-2.5 rounded-xl border border-[var(--line2)] bg-white/80 text-[14px]';
@@ -43,7 +43,7 @@ export default function ProductsAdmin() {
     setBusy(true); setMsg(null);
     const value: Product = { ...form, points: pointsText.split('\n').map(x => x.trim()).filter(Boolean) };
     try {
-      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value });
+      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value, expected_updated_at: (items || []).find(x => x.id === editId)?.updatedAt });
       else await api('records.create', { collection: COLLECTION, value, idempotency_key: `product-${Date.now()}` });
       setForm(null); setEditId(null); setMsg('บันทึกแล้ว'); await load();
     } catch (err) { setMsg('บันทึกไม่สำเร็จ: ' + errText(err)); }
@@ -54,7 +54,7 @@ export default function ProductsAdmin() {
     setConfirmId(null);
   }
   async function toggle(r: Rec) {
-    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' } }); await load(); }
+    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' }, expected_updated_at: r.updatedAt }); await load(); }
     catch (err) { setMsg('เปลี่ยนสถานะไม่สำเร็จ: ' + errText(err)); }
   }
   async function upload(files: FileList | null, kind: 'cover' | 'gallery') {

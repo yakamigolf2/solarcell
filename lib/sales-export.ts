@@ -3,6 +3,31 @@ import { installmentAmount, quoteTotals, type Receipt } from '@/lib/job';
 type Pay = { label: string; pct: number; status: string; due: string; receipt?: Receipt };
 export type ExportJob = { customer: string; phone: string; status: string; created: string; kw?: number; payments?: Pay[]; quoteApproval?: { by: string; at: string } | null; items?: unknown; labor?: unknown; discount?: unknown };
 
+/** Monthly output-VAT report (ภาษีขาย) from issued receipts, as .xlsx. */
+export async function exportVatExcel(rows: { date: string; no: string; customer: string; taxId: string; address: string; net: number; vat: number; amount: number }[], month: string) {
+  const ExcelJS = (await import('exceljs')).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet(`ภาษีขาย ${month}`);
+  const money = '#,##0.00';
+  ws.columns = [
+    { header: 'ลำดับ', key: 'i', width: 7 }, { header: 'วันที่', key: 'date', width: 12 }, { header: 'เลขที่ใบกำกับภาษี', key: 'no', width: 17 },
+    { header: 'ชื่อผู้ซื้อ', key: 'customer', width: 30 }, { header: 'เลขประจำตัวผู้เสียภาษี', key: 'taxId', width: 20 }, { header: 'ที่อยู่', key: 'address', width: 40 },
+    { header: 'มูลค่าสินค้า/บริการ', key: 'net', width: 17, style: { numFmt: money } }, { header: 'ภาษีมูลค่าเพิ่ม', key: 'vat', width: 15, style: { numFmt: money } }, { header: 'รวม', key: 'amount', width: 15, style: { numFmt: money } },
+  ];
+  rows.forEach((r, i) => ws.addRow({ i: i + 1, ...r, taxId: r.taxId && r.taxId !== '-' ? r.taxId : '' }));
+  const n = rows.length + 1;
+  const total = ws.addRow({ customer: 'รวม', net: { formula: `SUM(G2:G${n})` }, vat: { formula: `SUM(H2:H${n})` }, amount: { formula: `SUM(I2:I${n})` } });
+  total.font = { bold: true };
+  ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  const buf = await wb.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `BGE-รายงานภาษีขาย-${month}.xlsx`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 /** Sales report as .xlsx: one sheet per job, one per installment. Loaded on demand (exceljs is large). */
 export async function exportSalesExcel(jobs: ExportJob[], soldStatuses: string[]) {
   const ExcelJS = (await import('exceljs')).default;

@@ -7,7 +7,9 @@ export default function CountUp({ value, format = (n: number) => Math.round(n).t
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
-  const [shown, setShown] = useState(reduce ? value : 0);
+  // Always start at 0: the server can't know the reduced-motion setting, so starting at `value` for those users
+  // made the first client render differ from the HTML (React hydration error #418). The effect jumps to `value`.
+  const [shown, setShown] = useState(0);
   useEffect(() => {
     if (reduce) { setShown(value); return; }
     if (!inView) return;

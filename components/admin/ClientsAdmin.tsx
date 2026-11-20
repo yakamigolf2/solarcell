@@ -4,7 +4,7 @@ import { Eye, EyeOff, ImagePlus, Pencil, Plus, Save, Trash2, Users, X } from 'lu
 import { uploadLogo } from '@/lib/upload';
 
 type Client = { name: string; logo: string; order: number; status: 'แสดง' | 'ซ่อน' };
-type Rec = { id: string; value: Client };
+type Rec = { id: string; value: Client; updatedAt?: string };
 const COLLECTION = 'bge_clients';
 const input = 'w-full px-3 py-2.5 rounded-xl border border-[var(--line2)] bg-white text-[14px]';
 
@@ -37,7 +37,7 @@ export default function ClientsAdmin() {
     if (!form.logo) { setMsg('กรุณาอัปโหลดโลโก้'); return; }
     setBusy(true); setMsg(null);
     try {
-      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value: form });
+      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value: form, expected_updated_at: (items || []).find(x => x.id === editId)?.updatedAt });
       else await api('records.create', { collection: COLLECTION, value: form, idempotency_key: `client-${Date.now()}` });
       setForm(null); setEditId(null); setMsg('บันทึกแล้ว'); await load();
     } catch (err) { setMsg('บันทึกไม่สำเร็จ: ' + errText(err)); }
@@ -48,7 +48,7 @@ export default function ClientsAdmin() {
     setConfirmId(null);
   }
   async function toggle(r: Rec) {
-    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'แสดง' ? 'ซ่อน' : 'แสดง' } }); await load(); }
+    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'แสดง' ? 'ซ่อน' : 'แสดง' }, expected_updated_at: r.updatedAt }); await load(); }
     catch (err) { setMsg('เปลี่ยนสถานะไม่สำเร็จ: ' + errText(err)); }
   }
   async function pickLogo(f: File | undefined) {

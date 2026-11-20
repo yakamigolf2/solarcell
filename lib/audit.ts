@@ -28,6 +28,9 @@ export function jobChanges(before: V, after: V): AuditChange[] {
   diff('สถานะ', before.status, after.status);
   diff('ชื่อลูกค้า', before.customer, after.customer);
   diff('เบอร์โทร', before.phone, after.phone);
+  diff('เซลล์ผู้ดูแล', before.saleName || null, after.saleName || null);
+  diff('ทีมช่าง', before.techName || null, after.techName || null);
+  diff('วันติดตั้ง', before.installDate || null, after.installDate || null);
   const s0 = jobSubtotal(before), s1 = jobSubtotal(after);
   if (s0 !== s1) out.push({ field: 'ยอดก่อน VAT', from: s0, to: s1 });
   const p0: V[] = Array.isArray(before.payments) ? before.payments : [];

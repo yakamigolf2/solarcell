@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { records } from '../db/schema';
-import { SAMPLES, SAMPLE_USERS } from '../components/SolarApp';
+import { SAMPLES, SAMPLE_USERS } from '../components/solar/model';
 
 // Usage: DATABASE_URL=... bun run db:seed      (idempotent: only inserts what is missing)
 const url = process.env.DATABASE_URL;

@@ -7,7 +7,7 @@ import { toEmbedUrl } from '@/lib/embed';
 type Block = { type: 'heading' | 'text'; text: string } | { type: 'image'; url: string; caption: string } | { type: 'video'; url: string };
 
 type News = { title: string; tag: string; summary: string; body: string; blocks: Block[]; date: string; cover: string; status: 'เผยแพร่' | 'แบบร่าง' };
-type Rec = { id: string; value: News };
+type Rec = { id: string; value: News; updatedAt?: string };
 const COLLECTION = 'bge_news';
 const TAGS = ['ความรู้', 'คู่มือ', 'บำรุงรักษา', 'ข่าวบริษัท', 'โปรโมชัน'];
 const empty = (): News => ({ title: '', tag: TAGS[0], summary: '', body: '', blocks: [], date: new Date().toISOString().slice(0, 10), cover: '', status: 'แบบร่าง' });
@@ -92,7 +92,7 @@ export default function NewsAdmin() {
     setBusy(true); setMsg(null);
     try {
       const value = { ...form, body: '', blocks: (form.blocks || []).filter(b => (b.type === 'image' || b.type === 'video' ? b.url.trim() : b.text.trim())) };
-      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value });
+      if (editId) await api('records.replace', { collection: COLLECTION, id: editId, value, expected_updated_at: (items || []).find(x => x.id === editId)?.updatedAt });
       else await api('records.create', { collection: COLLECTION, value, idempotency_key: `news-${Date.now()}` });
       setForm(null); setEditId(null); setMsg(form.status === 'เผยแพร่' ? 'บันทึกและเผยแพร่แล้ว' : 'บันทึกแบบร่างแล้ว'); await load();
     } catch (err) { setMsg('บันทึกไม่สำเร็จ: ' + (err instanceof Error ? err.message : String(err))); }
@@ -104,7 +104,7 @@ export default function NewsAdmin() {
     setConfirmId(null);
   }
   async function toggle(r: Rec) {
-    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' } }); await load(); }
+    try { await api('records.replace', { collection: COLLECTION, id: r.id, value: { ...r.value, status: r.value.status === 'เผยแพร่' ? 'แบบร่าง' : 'เผยแพร่' }, expected_updated_at: r.updatedAt }); await load(); }
     catch (err) { setMsg('เปลี่ยนสถานะไม่สำเร็จ: ' + (err instanceof Error ? err.message : String(err))); }
   }
   async function pickCover(f: File | undefined) {
