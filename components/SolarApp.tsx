@@ -35,7 +35,7 @@ async function createRow(collection: string, value: any, key: string) { return c
 async function replaceRow(collection: string, id: string, value: any) { return callApi("records.replace", { collection, id, value }); }
 
 // ---------- Types ----------
-type Status = 'ลีดใหม่' | 'ติดต่อแล้ว' | 'สำรวจหน้างาน' | 'รอเสนอราคา' | 'เสนอราคาแล้ว' | 'ตกลงจ้าง' | 'มัดจำแล้ว' | 'รอติดตั้ง' | 'ติดตั้งแล้ว' | 'ยื่นการไฟฟ้า' | 'ส่งมอบงาน';
+type Status = 'ลีดใหม่' | 'ให้ติดต่อใหม่/ติดต่อไม่ได้' | 'รอใบเสนอราคาเบื้องต้น' | 'สำรวจหน้างาน' | 'รอใบเสนอราคาสุดท้าย' | 'รอแก้ไขใบเสนอราคา' | 'เสนอราคาแล้ว' | 'ตกลงจ้าง' | 'ปฏิเสธการจ้าง' | 'รอยื่นกู้ธนาคาร' | 'รอผลกู้ธนาคาร' | 'ยื่นกู้ไม่ผ่าน' | 'มัดจำแล้ว' | 'รอนัดวันติดตั้ง' | 'รอติดตั้ง' | 'อยู่ระหว่างการติดตั้ง' | 'ติดตั้งแล้วเสร็จ' | 'กำลังตรวจรับงานติดตั้ง' | 'ชำระเงินผู้รับเหมาแล้ว' | 'ลูกค้าชำระเงินแล้ว' | 'รอยื่นการไฟฟ้า' | 'อยู่ระหว่างยื่นการไฟฟ้า' | 'ยื่นการไฟฟ้าแล้วเสร็จ';
 type QuoteItem = { name: string; qty: number; price: number; discount?: number; vatPct?: number; details?: string[]; groups?: SpecGroup[] };
 type Payment = { label: string; pct: number; status: 'ยังไม่โอน' | 'โอนแล้ว' | 'รอตรวจสอบ' | 'ยืนยันแล้ว'; slip: string; due: string };
 type ElecStep = { label: string; done: boolean; date: string; note: string };
@@ -101,8 +101,8 @@ function normalizeUser(v: any): AppUser {
 
 const COMPANY_NAME = 'BGE - BETTER GROUP ENGINEERING CO., LTD.';
 const COMPANY_SHORT = 'BETTER GROUP ENGINEERING CO., LTD.';
-const STATUSES: Status[] = ['ลีดใหม่', 'ติดต่อแล้ว', 'สำรวจหน้างาน', 'รอเสนอราคา', 'เสนอราคาแล้ว', 'ตกลงจ้าง', 'มัดจำแล้ว', 'รอติดตั้ง', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า', 'ส่งมอบงาน'];
-const STATUS_COLOR: Record<string, string> = { 'ลีดใหม่': '#DBEAFE', 'ติดต่อแล้ว': '#E0E7FF', 'สำรวจหน้างาน': '#E0F2FE', 'รอเสนอราคา': '#EDE9FE', 'เสนอราคาแล้ว': '#D1FAE5', 'ตกลงจ้าง': '#CCFBF1', 'มัดจำแล้ว': '#CFFAFE', 'รอติดตั้ง': '#E2E8F0', 'ติดตั้งแล้ว': '#BBF7D0', 'ยื่นการไฟฟ้า': '#E9D5FF', 'ส่งมอบงาน': '#D1FAE5' };
+const STATUSES: Status[] = ['ลีดใหม่', 'ให้ติดต่อใหม่/ติดต่อไม่ได้', 'รอใบเสนอราคาเบื้องต้น', 'สำรวจหน้างาน', 'รอใบเสนอราคาสุดท้าย', 'รอแก้ไขใบเสนอราคา', 'เสนอราคาแล้ว', 'ตกลงจ้าง', 'ปฏิเสธการจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'ยื่นกู้ไม่ผ่าน', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า', 'ยื่นการไฟฟ้าแล้วเสร็จ'];
+const STATUS_COLOR: Record<string, string> = { 'ลีดใหม่': '#DBEAFE', 'ให้ติดต่อใหม่/ติดต่อไม่ได้': '#FEF3C7', 'รอใบเสนอราคาเบื้องต้น': '#EDE9FE', 'สำรวจหน้างาน': '#E0F2FE', 'รอใบเสนอราคาสุดท้าย': '#F3E8FF', 'รอแก้ไขใบเสนอราคา': '#FCE7F3', 'เสนอราคาแล้ว': '#D1FAE5', 'ตกลงจ้าง': '#CCFBF1', 'ปฏิเสธการจ้าง': '#FFE4E6', 'รอยื่นกู้ธนาคาร': '#FEF9C3', 'รอผลกู้ธนาคาร': '#FDE68A', 'ยื่นกู้ไม่ผ่าน': '#FECACA', 'มัดจำแล้ว': '#CFFAFE', 'รอนัดวันติดตั้ง': '#E0E7FF', 'รอติดตั้ง': '#E2E8F0', 'อยู่ระหว่างการติดตั้ง': '#BAE6FD', 'ติดตั้งแล้วเสร็จ': '#BBF7D0', 'กำลังตรวจรับงานติดตั้ง': '#A7F3D0', 'ชำระเงินผู้รับเหมาแล้ว': '#D1FAE5', 'ลูกค้าชำระเงินแล้ว': '#DCFCE7', 'รอยื่นการไฟฟ้า': '#E9D5FF', 'อยู่ระหว่างยื่นการไฟฟ้า': '#DDD6FE', 'ยื่นการไฟฟ้าแล้วเสร็จ': '#C4B5FD' };
 
 type CatalogItem = { name: string; price: number; code: string; category: string; keywords?: string };
 const CATALOG: CatalogItem[] = [
@@ -192,7 +192,7 @@ const SPEC_QUOTE_NOTE2 = '***ฟรี!!! ตาข่ายกันนกใ�
 export const SAMPLES: Job[] = [
   { customer: 'คุณ กาจ วิจิตรโรจน์', phone: '089-944-1004', line: '', address: 'เลขที่ 55/51 ม.9 ถ.กาญจนาภิเษก แขวงทวีวัฒนา เขตทวีวัฒนา กรุงเทพมหานคร 10170', building: 'บ้าน', bill: 0, roofArea: 0, roofDir: 'ทิศใต้', meter: '15/45', need: 'ใช้เอง', status: 'เสนอราคาแล้ว', created: '2026-08-17', kw: 12.9, panels: 20, inverter: 'Sigenergy 10.0kW', roofStruct: '', cable: 0, photos: '', surveyNote: '', customerNote: '', noteHistory: [], items: [{ ...SPEC_QUOTE_ITEM, details: [...SPEC_QUOTE_DETAILS] }], discount: 0, labor: 0, payments: payTemplate(), elecWanted: false, elec: elecTemplate(), contacts: [], nextAppt: '2026-08-24', attach: '', sitePhotos: [], photoChecklist: defaultChecklist(), quoteDocNo: 'QO-26080007', quoteIssueDate: '17/08/2026', quoteAcceptDate: '', quoteValidUntil: '24/08/2026', quoteRef: '', customerTaxId: '-', customerAttn: '-', contactBackName: 'รัชกร แฟงสาตุ', contactBackPhone: '0827411072', contactBackEmail: 'info.bge.energy@gmail.com', quoteNote1: SPEC_QUOTE_NOTE1, quoteNote2: SPEC_QUOTE_NOTE2 },
   { customer: 'คุณสมชาย ใจดี', phone: '081-234-5678', line: '@somchai', address: 'ซ.ลาดพร้าว 71 กรุงเทพฯ', building: 'บ้าน', bill: 4200, roofArea: 65, roofDir: 'ทิศใต้', meter: '15/45', need: 'ใช้เอง + ขายไฟ', status: 'ลีดใหม่', created: '2026-05-10', kw: 5.8, panels: 10, inverter: 'Inverter 5kW', roofStruct: 'กระเบื้องลอนคู่', cable: 28, photos: '', surveyNote: 'หลังคาแข็งแรง มีเงาต้นไม้เล็กน้อย', customerNote: 'ลูกค้าอยากติด 10kW เน้นประหยัดค่าไฟกลางวัน', noteHistory: [], items: [{ name: 'แผงโซลาร์ 580W Tier 1', qty: 10, price: 6500 }, { name: 'Inverter 5kW', qty: 1, price: 42000 }, { name: 'โครง Mounting + ราง', qty: 1, price: 18000 }, { name: 'สายไฟ + ท่อร้อยสาย', qty: 1, price: 12000 }], discount: 5000, labor: 25000, payments: payTemplate(), elecWanted: true, elec: elecTemplate(), contacts: [{ date: '2026-05-10', type: 'โทร', note: 'ลูกค้าสนใจติดตั้ง 5-6kW' }], nextAppt: '2026-05-20', attach: '', sitePhotos: samplePhotos('somchai', [{ group: 'before', caption: 'ภาพหลังคาก่อนติดตั้ง — มุมกว้าง', date: '2026-05-10', photographer: 'ช่างทีม A', category: 'หลังคา' }, { group: 'after', caption: 'แผงติดตั้งเสร็จ — มุมกว้าง', date: '2026-05-28', photographer: 'ช่างทีม A', category: 'แผง' }]), photoChecklist: defaultChecklist() },
-  { customer: 'คุณนภา สุขสันต์', phone: '089-111-2233', line: '@napa', address: 'หมู่บ้านพฤกษา บางใหญ่ นนทบุรี', building: 'บ้าน', bill: 2800, roofArea: 48, roofDir: 'ทิศตะวันตก', meter: '15/45', need: 'ใช้เอง', status: 'ติดต่อแล้ว', created: '2026-05-09', kw: 5.2, panels: 9, inverter: 'Inverter 5kW', roofStruct: 'เมทัลชีท', cable: 22, photos: '', surveyNote: '', customerNote: 'ขอใบเสนอราคา 2 แบบเปรียบเทียบ', noteHistory: [], items: [{ name: 'แผงโซลาร์ 580W Tier 1', qty: 9, price: 6500 }, { name: 'Inverter 5kW', qty: 1, price: 42000 }], discount: 3000, labor: 22000, payments: payTemplate(), elecWanted: false, elec: elecTemplate(), contacts: [], nextAppt: '2026-05-18', attach: '', sitePhotos: [], photoChecklist: defaultChecklist() },
+  { customer: 'คุณนภา สุขสันต์', phone: '089-111-2233', line: '@napa', address: 'หมู่บ้านพฤกษา บางใหญ่ นนทบุรี', building: 'บ้าน', bill: 2800, roofArea: 48, roofDir: 'ทิศตะวันตก', meter: '15/45', need: 'ใช้เอง', status: 'รอใบเสนอราคาเบื้องต้น', created: '2026-05-09', kw: 5.2, panels: 9, inverter: 'Inverter 5kW', roofStruct: 'เมทัลชีท', cable: 22, photos: '', surveyNote: '', customerNote: 'ขอใบเสนอราคา 2 แบบเปรียบเทียบ', noteHistory: [], items: [{ name: 'แผงโซลาร์ 580W Tier 1', qty: 9, price: 6500 }, { name: 'Inverter 5kW', qty: 1, price: 42000 }], discount: 3000, labor: 22000, payments: payTemplate(), elecWanted: false, elec: elecTemplate(), contacts: [], nextAppt: '2026-05-18', attach: '', sitePhotos: [], photoChecklist: defaultChecklist() },
   { customer: 'คุณวิชัย โรงงานพลาสติก', phone: '02-123-4567', line: '@wichai.factory', address: 'นิคมฯ บางปู สมุทรปราการ', building: 'โรงงาน', bill: 38000, roofArea: 520, roofDir: 'ทิศใต้', meter: '30/100', need: 'ใช้เอง + ขายไฟ', status: 'สำรวจหน้างาน', created: '2026-05-08', kw: 52, panels: 84, inverter: 'Inverter 15kW', roofStruct: 'เมทัลชีท โรงงาน', cable: 120, photos: '', surveyNote: 'พื้นที่กว้าง', customerNote: '', noteHistory: [], items: [{ name: 'แผงโซลาร์ 620W Tier 1', qty: 84, price: 7200 }, { name: 'Inverter 15kW', qty: 4, price: 92000 }], discount: 25000, labor: 85000, payments: payTemplate(), elecWanted: true, elec: elecTemplate(), contacts: [], nextAppt: '2026-05-22', attach: '', sitePhotos: [], photoChecklist: defaultChecklist() },
   { customer: 'คุณมานี รีสอร์ทเขาใหญ่', phone: '089-555-4433', line: '@manee.resort', address: 'อ.ปากช่อง นครราชสีมา', building: 'บ้าน', bill: 9200, roofArea: 120, roofDir: 'ทิศใต้', meter: '30/100', need: 'ใช้เอง', status: 'ตกลงจ้าง', created: '2026-05-05', kw: 12.2, panels: 21, inverter: 'Inverter 10kW', roofStruct: 'กระเบื้องลอนคู่', cable: 45, photos: '', surveyNote: '', customerNote: '', noteHistory: [], items: [{ name: 'แผงโซลาร์ 580W Tier 1', qty: 21, price: 6500 }, { name: 'Inverter 10kW', qty: 2, price: 68000 }], discount: 12000, labor: 42000, payments: payTemplate(), elecWanted: false, elec: elecTemplate(), contacts: [], nextAppt: '2026-05-25', attach: '', sitePhotos: [], photoChecklist: defaultChecklist() },
 ];
@@ -449,23 +449,23 @@ function AppInner() {
   }), userRecords), [userRecords, userSearch, userRoleFilter]);
 
   const stats = useMemo(() => safe(() => {
-    const totalSales = jobs.filter(j => ['ตกลงจ้าง', 'มัดจำแล้ว', 'รอติดตั้ง', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า', 'ส่งมอบงาน'].includes(j.status)).reduce((s, j) => s + calcTotal(j).total, 0);
+    const totalSales = jobs.filter(j => ['ตกลงจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า', 'ยื่นการไฟฟ้าแล้วเสร็จ'].includes(j.status)).reduce((s, j) => s + calcTotal(j).total, 0);
     const waitingMoney = jobs.reduce((s, j) => s + paymentAmounts(j).filter(p => p.status !== 'ยืนยันแล้ว').reduce((a, p) => a + p.amount, 0), 0);
-    return { totalSales, newLeads: jobs.filter(j => j.status === 'ลีดใหม่').length, waitInstall: jobs.filter(j => j.status === 'รอติดตั้ง').length, waitElec: jobs.filter(j => j.status === 'ยื่นการไฟฟ้า').length, waitingMoney, near: jobs.filter(j => !!j.nextAppt).length };
+    return { totalSales, newLeads: jobs.filter(j => j.status === 'ลีดใหม่').length, waitInstall: jobs.filter(j => ['รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง'].includes(j.status)).length, waitElec: jobs.filter(j => ['รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า'].includes(j.status)).length, waitingMoney, near: jobs.filter(j => !!j.nextAppt).length };
   }, { totalSales: 0, newLeads: 0, waitInstall: 0, waitElec: 0, waitingMoney: 0, near: 0 }), [jobs]);
 
-  const ACTIVE_ST = ['ตกลงจ้าง', 'มัดจำแล้ว', 'รอติดตั้ง', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า'];
+  const ACTIVE_ST = ['ตกลงจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า'];
   const dash: DashData = useMemo(() => safe(() => {
     const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1); return { key: d.getFullYear() * 12 + d.getMonth(), label: TH_M[d.getMonth()], count: 0 }; });
     jobs.forEach(j => { const d = new Date(j.created); if (!isNaN(d.getTime())) { const m = months.find(x => x.key === d.getFullYear() * 12 + d.getMonth()); if (m) m.count += 1; } });
     const n = (f: (j: Job) => boolean) => jobs.filter(f).length;
-    const done = n(j => j.status === 'ส่งมอบงาน');
+    const done = n(j => j.status === 'ยื่นการไฟฟ้าแล้วเสร็จ');
     return {
       greetingName: currentUser?.value.name || '', roleLabel: currentUser ? ROLE_LABEL[currentUser.value.role] : '',
       kpis: [
-        { key: 'quotes', label: 'ใบเสนอราคา', value: n(j => STATUSES.indexOf(j.status) >= 3), sub: `จากทั้งหมด ${jobs.length} งาน`, tone: 'amber' },
+        { key: 'quotes', label: 'ใบเสนอราคา', value: n(j => STATUSES.indexOf(j.status) >= 2), sub: `จากทั้งหมด ${jobs.length} งาน`, tone: 'amber' },
         { key: 'leads', label: 'ลูกค้าใหม่', value: stats.newLeads, sub: 'รอติดต่อกลับ', tone: 'violet' },
         { key: 'active', label: 'โครงการที่กำลังดำเนินการ', value: n(j => ACTIVE_ST.includes(j.status)), sub: `เสร็จสิ้นแล้ว ${done} งาน`, tone: 'blue' },
         { key: 'revenue', label: 'รายได้ (งานที่ตกลงแล้ว)', value: stats.totalSales, money: true, sub: 'รวมทุกโครงการที่ตกลงจ้าง', tone: 'green' },
@@ -473,10 +473,10 @@ function AppInner() {
       extra: { waitingMoney: stats.waitingMoney, waitElec: stats.waitElec, waitInstall: stats.waitInstall },
       monthly: months.map(m => ({ label: m.label, count: m.count })),
       donut: [
-        { name: 'กำลังดำเนินการ', value: n(j => ['ตกลงจ้าง', 'มัดจำแล้ว', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า'].includes(j.status)), color: '#22C55E' },
-        { name: 'รอติดตั้ง', value: n(j => j.status === 'รอติดตั้ง'), color: '#3B82F6' },
+        { name: 'ก่อนการขาย', value: n(j => STATUSES.indexOf(j.status) < 7), color: '#94A3B8' },
+        { name: 'รอ / เตรียมติดตั้ง', value: n(j => ['ตกลงจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง'].includes(j.status)), color: '#3B82F6' },
+        { name: 'กำลังดำเนินการ', value: n(j => ['อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า'].includes(j.status)), color: '#22C55E' },
         { name: 'เสร็จสิ้น', value: done, color: '#FBBF24' },
-        { name: 'ก่อนการขาย', value: n(j => STATUSES.indexOf(j.status) < 5), color: '#94A3B8' },
       ],
       recent: [...records].reverse().slice(0, 5).map(r => ({ id: r.id, name: String(r.value.customer || ''), address: String(r.value.address || ''), status: r.value.status, statusBg: STATUS_COLOR[r.value.status] || '#E2E8F0' })),
       total: jobs.length,
@@ -884,7 +884,7 @@ function renderQuotePng(job: Job, seller: any, doc: any, cust: any, back: any, p
   return canvas.toDataURL('image/png');
 }
 // ---------- Quote: plain HTML only. No canvas export library, no external fonts ----------
-const SOLD_STATUSES = ['ตกลงจ้าง', 'มัดจำแล้ว', 'รอติดตั้ง', 'ติดตั้งแล้ว', 'ยื่นการไฟฟ้า', 'ส่งมอบงาน'];
+const SOLD_STATUSES = ['ตกลงจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า', 'ยื่นการไฟฟ้าแล้วเสร็จ'];
 /** Packages from other customers' quotations that can be reused as a starting point (items with equipment groups/details). */
 function buildHistory(records: Rec[], excludeId: string): HistoryItem[] {
   const out: HistoryItem[] = [];
