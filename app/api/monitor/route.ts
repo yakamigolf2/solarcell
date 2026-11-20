@@ -3,6 +3,9 @@ import { sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { getSessionUser } from '@/lib/auth';
+import { listBackups } from '@/lib/backup';
+import { ERRORS, type ErrorEntry } from '@/lib/errors';
+import { lineConfigured } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,11 +64,26 @@ async function blob() {
   return { bytes, files, limitBytes: LIMITS.blobBytes, folders: Object.entries(byFolder).map(([name, v]) => ({ name, ...v })).sort((a, b) => b.bytes - a.bytes) };
 }
 
+async function errors() {
+  const rows = (await getDb().execute(sql`select value from records where collection = ${ERRORS} order by updated_at desc limit 30`)).rows as { value: ErrorEntry }[];
+  const [{ n }] = (await getDb().execute(sql`select coalesce(sum((value->>'count')::int), 0)::int as n from records where collection = ${ERRORS} and updated_at > now() - interval '24 hours'`)).rows as { n: number }[];
+  return { last24h: n, items: rows.map((r) => r.value) };
+}
+
+async function backups() {
+  const all = await listBackups();
+  return {
+    configured: !!process.env.BACKUP_KEY, cron: !!process.env.CRON_SECRET, line: lineConfigured(),
+    count: all.length, latest: all[0] ? { at: all[0].uploadedAt, size: all[0].size } : null,
+    items: all.slice(0, 10).map((b) => ({ at: b.uploadedAt, size: b.size, pathname: b.pathname })),
+  };
+}
+
 const settle = async <T,>(f: () => Promise<T>) => { try { return { ok: true as const, data: await f() }; } catch (e) { console.error('monitor', e); return { ok: false as const, error: 'ดึงข้อมูลไม่สำเร็จ' }; } };
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user || user.value.role !== 'Admin') return NextResponse.json({ error: 'เฉพาะผู้ดูแลระบบ' }, { status: 403 });
-  const [db, cpu, files] = await Promise.all([settle(database), settle(compute), settle(blob)]);
-  return NextResponse.json({ data: { checkedAt: new Date().toISOString(), db, cpu, blob: files } });
+  const [db, cpu, files, errs, bk] = await Promise.all([settle(database), settle(compute), settle(blob), settle(errors), settle(backups)]);
+  return NextResponse.json({ data: { checkedAt: new Date().toISOString(), db, cpu, blob: files, errors: errs, backups: bk } });
 }

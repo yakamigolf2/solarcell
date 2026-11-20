@@ -1,9 +1,12 @@
 'use client';
 import MapPreview from '@/components/admin/MapPreview';
+import { reportError } from '@/lib/report-error';
 import ReleaseNotes from '@/components/admin/ReleaseNotes';
 import SystemMonitor from '@/components/admin/SystemMonitor';
-import { Activity } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Activity, ChevronDown, Globe, History } from 'lucide-react';
+import AuditLog from '@/components/admin/AuditLog';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { installmentAmount, LEGACY_STATUS, quoteTotals, STATUS_GROUPS, STATUSES as JOB_STATUSES, type QuoteApproval, type Receipt, type Status as JobStatus } from '@/lib/job';
 import { Search, Plus, LayoutDashboard, Users, ClipboardList, FileText, Wallet, Zap, Settings, Menu, X, Phone, MapPin, Calendar, Eye, Pencil, Trash2, Sun, TrendingUp, Clock, AlertTriangle, CheckCircle2, Circle, Building2, Home, Factory, Briefcase, Save, Camera, Copy, ExternalLink, NotebookPen, LogOut, ShieldCheck, UserCog, Lock, KeyRound, User as UserIcon, Mail, Image as ImageIcon } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { MotionConfig, motion } from 'motion/react';
@@ -21,7 +24,8 @@ import NewsAdmin from '@/components/admin/NewsAdmin';
 import Dashboard, { DashboardSkeleton, type DashData } from '@/components/admin/Dashboard';
 
 // ---------- Safe helpers: every risky spot is guarded ----------
-function safe<T>(fn: () => T, fallback: T): T { try { return fn(); } catch { return fallback; } }
+// Falls back instead of crashing the screen, but reports the error so it is no longer silent.
+function safe<T>(fn: () => T, fallback: T): T { try { return fn(); } catch (e) { reportError(e, 'safe'); return fallback; } }
 function safeNum(v: any, fallback = 0): number { const n = Number(v); return Number.isFinite(n) ? n : fallback; }
 
 // ---------- API (records only, guarded) ----------
@@ -31,17 +35,18 @@ async function callApi(action: string, args: any) {
   try {
     const res = await fetch("/api/actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, args }), signal: controller.signal });
     const json = await res.json().catch(() => ({} as any));
-    if (!res.ok || (json as any).error) throw new Error((json as any).error || `API error ${res.status}`);
+    if (!res.ok || (json as any).error) throw Object.assign(new Error((json as any).error || `API error ${res.status}`), { status: res.status, code: (json as any).code });
     return (json as any).data;
   } finally { clearTimeout(timer); }
 }
 async function createRow(collection: string, value: any, key: string) { return callApi("records.create", { collection, value, idempotency_key: key }); }
-async function replaceRow(collection: string, id: string, value: any) { return callApi("records.replace", { collection, id, value }); }
+async function replaceRow(collection: string, id: string, value: any, expectedUpdatedAt?: string) { return callApi("records.replace", { collection, id, value, expected_updated_at: expectedUpdatedAt }); }
+const isConflict = (e: unknown) => (e as any)?.code === 'conflict';
 
 // ---------- Types ----------
-type Status = 'ลีดใหม่' | 'ให้ติดต่อใหม่/ติดต่อไม่ได้' | 'รอใบเสนอราคาเบื้องต้น' | 'สำรวจหน้างาน' | 'รอใบเสนอราคาสุดท้าย' | 'รอแก้ไขใบเสนอราคา' | 'เสนอราคาแล้ว' | 'ตกลงจ้าง' | 'ปฏิเสธการจ้าง' | 'รอยื่นกู้ธนาคาร' | 'รอผลกู้ธนาคาร' | 'ยื่นกู้ไม่ผ่าน' | 'มัดจำแล้ว' | 'รอนัดวันติดตั้ง' | 'รอติดตั้ง' | 'อยู่ระหว่างการติดตั้ง' | 'ติดตั้งแล้วเสร็จ' | 'กำลังตรวจรับงานติดตั้ง' | 'ชำระเงินผู้รับเหมาแล้ว' | 'ลูกค้าชำระเงินแล้ว' | 'รอยื่นการไฟฟ้า' | 'อยู่ระหว่างยื่นการไฟฟ้า' | 'ยื่นการไฟฟ้าแล้วเสร็จ';
+type Status = JobStatus;
 type QuoteItem = { name: string; qty: number; price: number; discount?: number; vatPct?: number; details?: string[]; groups?: SpecGroup[] };
-type Payment = { label: string; pct: number; status: 'ยังไม่โอน' | 'โอนแล้ว' | 'รอตรวจสอบ' | 'ยืนยันแล้ว'; slip: string; due: string };
+type Payment = { label: string; pct: number; status: 'ยังไม่โอน' | 'โอนแล้ว' | 'รอตรวจสอบ' | 'ยืนยันแล้ว'; slip: string; due: string; receipt?: Receipt };
 type ElecStep = { label: string; done: boolean; date: string; note: string };
 type Contact = { date: string; type: string; note: string };
 type NoteHistoryItem = { date: string; text: string };
@@ -49,7 +54,7 @@ type PhotoGroup = 'before' | 'after';
 type SitePhoto = { id: string; group: PhotoGroup; url: string; caption: string; date: string; photographer: string; category: string };
 type ChecklistItem = { id: string; group: PhotoGroup; label: string; done: boolean };
 type Job = {
-  customer: string; phone: string; line: string; address: string; mapUrl?: string; building: string; bill: number; roofArea: number; roofDir: string; meter: string; need: string;
+  customer: string; phone: string; line: string; address: string; mapUrl?: string; quoteApproval?: QuoteApproval | null; building: string; bill: number; roofArea: number; roofDir: string; meter: string; need: string;
   status: Status; created: string; kw: number; panels: number; inverter: string; roofStruct: string; cable: number; photos: string; surveyNote: string;
   items: QuoteItem[]; discount: number; labor: number; payments: Payment[]; elecWanted: boolean; elec: ElecStep[]; contacts: Contact[]; nextAppt: string; attach: string; customerNote: string; noteHistory: NoteHistoryItem[];
   sitePhotos: SitePhoto[]; photoChecklist: ChecklistItem[];
@@ -57,7 +62,7 @@ type Job = {
   customerTaxId?: string; customerAttn?: string; contactBackName?: string; contactBackPhone?: string; contactBackEmail?: string;
   quoteNote1?: string; quoteNote2?: string; quoteRemark?: string; attachments?: Attachment[];
 };
-type Rec = { id: string; value: Job };
+type Rec = { id: string; value: Job; updatedAt?: string };
 type CompanySettings = { address: string; phone: string; taxId: string; email?: string };
 type Role = 'Admin' | 'Sale' | 'Technician' | 'Accountant';
 type PermKey = 'customers_view' | 'customers_create' | 'customers_edit' | 'customers_delete' | 'orders_view' | 'orders_create' | 'orders_edit' | 'orders_delete' | 'orders_change_status' | 'quotes_view' | 'quotes_create' | 'quotes_edit' | 'quotes_approve' | 'finance_view' | 'finance_confirm' | 'finance_edit_installments' | 'electric_view' | 'electric_update' | 'photos_view' | 'photos_upload' | 'photos_delete' | 'users_view' | 'users_manage' | 'settings_view' | 'settings_edit' | 'news_manage' | 'projects_manage' | 'products_manage' | 'clients_manage';
@@ -105,7 +110,7 @@ function normalizeUser(v: any): AppUser {
 
 const COMPANY_NAME = 'BGE - BETTER GROUP ENGINEERING CO., LTD.';
 const COMPANY_SHORT = 'BETTER GROUP ENGINEERING CO., LTD.';
-const STATUSES: Status[] = ['ลีดใหม่', 'ให้ติดต่อใหม่/ติดต่อไม่ได้', 'รอใบเสนอราคาเบื้องต้น', 'สำรวจหน้างาน', 'รอใบเสนอราคาสุดท้าย', 'รอแก้ไขใบเสนอราคา', 'เสนอราคาแล้ว', 'ตกลงจ้าง', 'ปฏิเสธการจ้าง', 'รอยื่นกู้ธนาคาร', 'รอผลกู้ธนาคาร', 'ยื่นกู้ไม่ผ่าน', 'มัดจำแล้ว', 'รอนัดวันติดตั้ง', 'รอติดตั้ง', 'อยู่ระหว่างการติดตั้ง', 'ติดตั้งแล้วเสร็จ', 'กำลังตรวจรับงานติดตั้ง', 'ชำระเงินผู้รับเหมาแล้ว', 'ลูกค้าชำระเงินแล้ว', 'รอยื่นการไฟฟ้า', 'อยู่ระหว่างยื่นการไฟฟ้า', 'ยื่นการไฟฟ้าแล้วเสร็จ'];
+const STATUSES: Status[] = [...JOB_STATUSES];
 const STATUS_COLOR: Record<string, string> = { 'ลีดใหม่': '#DBEAFE', 'ให้ติดต่อใหม่/ติดต่อไม่ได้': '#FEF3C7', 'รอใบเสนอราคาเบื้องต้น': '#EDE9FE', 'สำรวจหน้างาน': '#E0F2FE', 'รอใบเสนอราคาสุดท้าย': '#F3E8FF', 'รอแก้ไขใบเสนอราคา': '#FCE7F3', 'เสนอราคาแล้ว': '#D1FAE5', 'ตกลงจ้าง': '#CCFBF1', 'ปฏิเสธการจ้าง': '#FFE4E6', 'รอยื่นกู้ธนาคาร': '#FEF9C3', 'รอผลกู้ธนาคาร': '#FDE68A', 'ยื่นกู้ไม่ผ่าน': '#FECACA', 'มัดจำแล้ว': '#CFFAFE', 'รอนัดวันติดตั้ง': '#E0E7FF', 'รอติดตั้ง': '#E2E8F0', 'อยู่ระหว่างการติดตั้ง': '#BAE6FD', 'ติดตั้งแล้วเสร็จ': '#BBF7D0', 'กำลังตรวจรับงานติดตั้ง': '#A7F3D0', 'ชำระเงินผู้รับเหมาแล้ว': '#D1FAE5', 'ลูกค้าชำระเงินแล้ว': '#DCFCE7', 'รอยื่นการไฟฟ้า': '#E9D5FF', 'อยู่ระหว่างยื่นการไฟฟ้า': '#DDD6FE', 'ยื่นการไฟฟ้าแล้วเสร็จ': '#C4B5FD' };
 
 type CatalogItem = { name: string; price: number; code: string; category: string; keywords?: string };
@@ -128,19 +133,16 @@ const CATALOG: CatalogItem[] = [
 ];
 function calcTotal(j: Job) {
   return safe(() => {
-    const sub = (j.items || []).reduce((s, i) => s + safeNum(i.qty) * safeNum(i.price), 0) + safeNum(j.labor);
-    const after = Math.max(0, sub - safeNum(j.discount));
-    const vat = Math.round(after * 0.07);
-    return { sub, after, vat, total: after + vat };
+    const t = quoteTotals(j);
+    return { sub: t.gross, after: t.net, vat: t.vat, total: t.total };
   }, { sub: 0, after: 0, vat: 0, total: 0 });
 }
-function paymentAmounts(j: Job) { return safe(() => { const t = calcTotal(j).total; return (j.payments || []).map(p => ({ ...p, amount: Math.round(t * safeNum(p.pct) / 100) })); }, []); }
+function paymentAmounts(j: Job) { return safe(() => { return (j.payments || []).map(p => ({ ...p, amount: p.receipt ? p.receipt.amount : installmentAmount(j, p.pct).amount })); }, []); }
 function elecTemplate(): ElecStep[] { return [{ label: 'ยื่นคำร้อง', done: false, date: '', note: '' }, { label: 'ตรวจเอกสาร', done: false, date: '', note: '' }, { label: 'ติดตั้งมิเตอร์ขายไฟ', done: false, date: '', note: '' }, { label: 'อนุมัติขนานไฟ', done: false, date: '', note: '' }, { label: 'เริ่มขายไฟ', done: false, date: '', note: '' }]; }
 function payTemplate(): Payment[] { return [{ label: 'งวดที่ 1 • มัดจำ', pct: 30, status: 'ยังไม่โอน', slip: '', due: '' }, { label: 'งวดที่ 2 • ติดตั้ง', pct: 40, status: 'ยังไม่โอน', slip: '', due: '' }, { label: 'งวดที่ 3 • ส่งมอบ', pct: 30, status: 'ยังไม่โอน', slip: '', due: '' }]; }
 function defaultChecklist(): ChecklistItem[] { return [{ id: 'ck-before-angles', group: 'before', label: 'ก่อนติดตั้ง 4 มุม', done: false }, { id: 'ck-before-roof', group: 'before', label: 'หลังคาใกล้–ไกล', done: false }, { id: 'ck-before-meter', group: 'before', label: 'มิเตอร์ไฟ', done: false }, { id: 'ck-after-panels', group: 'after', label: 'หลังติดตั้งแผงครบ', done: false }, { id: 'ck-after-inverter', group: 'after', label: 'Inverter', done: false }, { id: 'ck-after-combiner', group: 'after', label: 'ตู้ Combiner', done: false }, { id: 'ck-after-sign', group: 'after', label: 'ป้ายงาน', done: false }, { id: 'ck-after-customer', group: 'after', label: 'ลูกค้ายืนถ่ายกับงาน', done: false }]; }
 const PHOTO_CATEGORIES = ['หลังคา', 'แผง', 'Inverter', 'ตู้ไฟ', 'พื้นที่ติดตั้ง', 'หน้างานโดยรวม', 'อื่น ๆ'];
-// Statuses from the old 11-stage flow, mapped onto the 23-stage flow so saved jobs still land in a column.
-const LEGACY_STATUS: Record<string, Status> = { 'ติดต่อแล้ว': 'รอใบเสนอราคาเบื้องต้น', 'รอเสนอราคา': 'รอใบเสนอราคาสุดท้าย', 'ติดตั้งแล้ว': 'ติดตั้งแล้วเสร็จ', 'ยื่นการไฟฟ้า': 'อยู่ระหว่างยื่นการไฟฟ้า', 'ส่งมอบงาน': 'ยื่นการไฟฟ้าแล้วเสร็จ' };
+
 function normalizeJob(v: any): Job {
   return safe(() => {
     const base = { ...(v || {}) } as Job;
@@ -264,13 +266,20 @@ export default function App() {
 }
 
 function AppInner() {
-  const [view, setView] = useState<'dashboard' | 'leads' | 'orders' | 'quotes' | 'finance' | 'electric' | 'album' | 'settings' | 'users' | 'news' | 'projects' | 'products' | 'clients' | 'monitor' | 'profile'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'leads' | 'orders' | 'quotes' | 'finance' | 'electric' | 'album' | 'settings' | 'users' | 'news' | 'projects' | 'products' | 'clients' | 'monitor' | 'audit' | 'profile'>('dashboard');
   const [records, setRecords] = useState<Rec[]>([]);
+  const recordsRef = useRef<Rec[]>([]);
+  useEffect(() => { recordsRef.current = records; }, [records]);
+  const saveQueue = useRef<Record<string, Promise<void>>>({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
+  const [groupFilter, setGroupFilter] = useState('ทั้งหมด');
+  const [webMenuOpen, setWebMenuOpen] = useState(false);
+  useEffect(() => { if (['news', 'projects', 'products', 'clients'].includes(view)) setWebMenuOpen(true); }, [view]);
+  const inGroup = (s: string) => groupFilter === 'ทั้งหมด' || !!STATUS_GROUPS.find(g => g.name === groupFilter)?.statuses.includes(s as Status);
   const [needFilter, setNeedFilter] = useState('ทั้งหมด');
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Rec | null>(null);
@@ -325,7 +334,7 @@ function AppInner() {
     try {
       const data: any = await callApi("records.list", { collection: "solarpro_jobs" });
       const list = (data.records || []) as any[];
-      setRecords(list.map((r: any) => ({ id: r.id, value: normalizeJob(r.value) })));
+      setRecords(list.map((r: any) => ({ id: r.id, value: normalizeJob(r.value), updatedAt: r.updatedAt })));
       return list;
     } catch (e) { throw e; }
   };
@@ -446,10 +455,10 @@ function AppInner() {
   const filtered = useMemo(() => safe(() => records.filter(r => {
     const q = search.toLowerCase();
     const hit = !q || String(r.value.customer || '').toLowerCase().includes(q) || String(r.value.phone || '').includes(q) || String(r.value.address || '').toLowerCase().includes(q) || String(r.value.customerNote || '').toLowerCase().includes(q);
-    const st = statusFilter === 'ทั้งหมด' || r.value.status === statusFilter;
+    const st = (statusFilter === 'ทั้งหมด' || r.value.status === statusFilter) && inGroup(r.value.status);
     const nd = needFilter === 'ทั้งหมด' || r.value.need === needFilter;
     return hit && st && nd;
-  }), records), [records, search, statusFilter, needFilter]);
+  }), records), [records, search, statusFilter, needFilter, groupFilter]);
   const filteredUsers = useMemo(() => safe(() => userRecords.filter(r => {
     const q = userSearch.toLowerCase();
     const hit = !q || String(r.value.name || '').toLowerCase().includes(q) || String(r.value.username || '').toLowerCase().includes(q) || String(r.value.phone || '').includes(q) || String(r.value.email || '').toLowerCase().includes(q);
@@ -501,7 +510,7 @@ function AppInner() {
       setBusy(true); setResult(null);
       let saved = 0; let error: string | null = null;
       try {
-        if (editing) { await replaceRow("solarpro_jobs", editing.id, form); }
+        if (editing) { await replaceRow("solarpro_jobs", editing.id, form, editing.updatedAt); }
         else { await createRow("solarpro_jobs", form, `job-${Date.now()}`); }
         saved += 1;
       } catch (err) { error = err instanceof Error ? err.message : String(err); }
@@ -526,13 +535,49 @@ function AppInner() {
     } catch { setCompanyBusy(false); }
   }
   async function updateJob(id: string, patch: Partial<Job>, opts?: { require?: PermKey }) {
+    if (opts?.require && !can(opts.require)) { setResult('ไม่มีสิทธิ์'); return; }
+    const rec = recordsRef.current.find(r => r.id === id); if (!rec) return;
+    const next = { ...rec.value, ...patch };
+    recordsRef.current = recordsRef.current.map(r => r.id === id ? { ...r, value: next } : r);
+    setRecords(recordsRef.current);
+    // Saves of one job run one after another, each with the version the previous save returned.
+    const run = async () => {
+      const cur = recordsRef.current.find(r => r.id === id);
+      try {
+        const saved: any = await replaceRow("solarpro_jobs", id, cur?.value ?? next, cur?.updatedAt);
+        recordsRef.current = recordsRef.current.map(r => r.id === id ? { ...r, updatedAt: saved?.updatedAt } : r);
+        setRecords(recordsRef.current);
+      } catch (e) {
+        setResult((isConflict(e) ? '' : 'บันทึกไม่สำเร็จ: ') + (e instanceof Error ? e.message : String(e)));
+        await reloadRecords().catch(() => undefined);
+      }
+    };
+    const chain = (saveQueue.current[id] || Promise.resolve()).then(run);
+    saveQueue.current[id] = chain;
+    await chain;
+  }
+  async function issueReceipt(id: string, index: number): Promise<Receipt | null> {
     try {
-      if (opts?.require && !can(opts.require)) { setResult('ไม่มีสิทธิ์'); return; }
-      const rec = records.find(r => r.id === id); if (!rec) return;
-      const next = { ...rec.value, ...patch };
-      setRecords(prev => prev.map(r => r.id === id ? { ...r, value: next } : r));
-      try { await replaceRow("solarpro_jobs", id, next); } catch (e) { setResult('บันทึกไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e))); }
-    } catch { /* ignore */ }
+      const saved: any = await callApi('receipt.issue', { id, index });
+      recordsRef.current = recordsRef.current.map(r => r.id === id ? { id, value: normalizeJob(saved.value), updatedAt: saved.updatedAt } : r);
+      setRecords(recordsRef.current);
+      return saved.value?.payments?.[index]?.receipt || null;
+    } catch (e) {
+      setResult('ออกใบเสร็จไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
+      await reloadRecords().catch(() => undefined);
+      return null;
+    }
+  }
+  async function approveQuote(id: string, approve: boolean) {
+    try {
+      const saved: any = await callApi('quote.approve', { id, approve });
+      recordsRef.current = recordsRef.current.map(r => r.id === id ? { id, value: normalizeJob(saved.value), updatedAt: saved.updatedAt } : r);
+      setRecords(recordsRef.current);
+      setResult(approve ? 'อนุมัติใบเสนอราคาแล้ว ราคาถูกล็อก' : 'ยกเลิกการอนุมัติแล้ว แก้ไขราคาได้');
+    } catch (e) {
+      setResult('ดำเนินการไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
+      await reloadRecords().catch(() => undefined);
+    }
   }
   function saveSitePhoto() {
     try {
@@ -596,6 +641,7 @@ function AppInner() {
   const quoteJobs = quoteSearch ? records.filter(r => String(r.value.customer || '').toLowerCase().includes(quoteSearch.toLowerCase())) : records;
   const allPhotos: { job: Job; photo: SitePhoto }[] = safe(() => records.flatMap(r => (r.value.sitePhotos || []).map(photo => ({ job: r.value, photo }))), []);
 
+  const WEB_VIEWS: string[] = ['news', 'projects', 'products', 'clients'];
   const NavItem = ({ id, label, icon, badge }: { id: any; label: string; icon: React.ReactNode; badge?: number }) => (
     <button onClick={() => { try { setView(id); setSidebarOpen(false); } catch { /* ignore */ } }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] font-medium transition ${view === id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-900/30' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
       {icon}<span className="flex-1">{label}</span>{typeof badge === 'number' && badge > 0 && <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${view === id ? 'bg-white/25 text-white' : 'bg-white/15 text-white'}`}>{badge}</span>}
@@ -653,13 +699,21 @@ function AppInner() {
           {can('finance_view') && <NavItem id="finance" label="การเงิน" icon={<Wallet size={19} />} />}
           {can('electric_view') && <NavItem id="electric" label="งานการไฟฟ้า" icon={<Zap size={19} />} badge={stats.waitElec} />}
           {can('photos_view') && <NavItem id="album" label="อัลบั้ม" icon={<Camera size={19} />} badge={allPhotos.length} />}
-          {can('news_manage') && <NavItem id="news" label="ข่าวสารเว็บไซต์" icon={<FileText size={19} />} />}
-          {can('projects_manage') && <NavItem id="projects" label="ผลงานเว็บไซต์" icon={<Building2 size={19} />} />}
-          {can('products_manage') && <NavItem id="products" label="อุปกรณ์เว็บไซต์" icon={<Zap size={19} />} />}
-          {can('clients_manage') && <NavItem id="clients" label="ลูกค้าของเรา (เว็บไซต์)" icon={<Users size={19} />} />}
+          {(can('news_manage') || can('projects_manage') || can('products_manage') || can('clients_manage')) && <div>
+            <button onClick={() => setWebMenuOpen(o => !o)} aria-expanded={webMenuOpen || WEB_VIEWS.includes(view)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-[14px] font-medium transition ${WEB_VIEWS.includes(view) && !webMenuOpen ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+              <Globe size={19} /><span className="flex-1">แก้ไขหน้าเว็บ</span><ChevronDown size={16} className={`transition-transform ${webMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {webMenuOpen && <div className="mt-1 ml-3 pl-2 border-l border-white/15 space-y-1">
+              {can('news_manage') && <NavItem id="news" label="ข่าวสาร" icon={<FileText size={17} />} />}
+              {can('projects_manage') && <NavItem id="projects" label="ผลงาน" icon={<Building2 size={17} />} />}
+              {can('products_manage') && <NavItem id="products" label="อุปกรณ์" icon={<Zap size={17} />} />}
+              {can('clients_manage') && <NavItem id="clients" label="ลูกค้าของเรา" icon={<Users size={17} />} />}
+            </div>}
+          </div>}
           {can('users_view') && <NavItem id="users" label="ผู้ใช้" icon={<UserCog size={19} />} badge={userRecords.length} />}
           {can('settings_view') && <NavItem id="settings" label="ตั้งค่าบริษัท / อุปกรณ์" icon={<Settings size={19} />} />}
           {currentUser?.value.role === 'Admin' && <NavItem id="monitor" label="การใช้งานระบบ" icon={<Activity size={19} />} />}
+          {(currentUser?.value.role === 'Admin' || can('users_manage')) && <NavItem id="audit" label="ประวัติการแก้ไข" icon={<History size={19} />} />}
           <NavItem id="profile" label="โปรไฟล์ของฉัน" icon={<UserIcon size={19} />} />
           </nav>
           <div className="mt-auto rounded-2xl bg-white/10 p-4"><div className="flex items-center gap-2 font-semibold text-[13px]"><Sun size={18} className="text-amber-300" /> เคล็ดลับวันนี้</div><p className="text-[12px] leading-relaxed mt-1 text-white/75">หลังคาทิศใต้ให้ผลผลิตดีที่สุด ติดตามลีดภายใน 24 ชม. เพิ่มโอกาสปิดงานถึง 2 เท่า</p></div>
@@ -693,6 +747,7 @@ function AppInner() {
           {view === 'products' && can('products_manage') && <ProductsAdmin />}
           {view === 'clients' && can('clients_manage') && <ClientsAdmin />}
           {view === 'monitor' && currentUser?.value.role === 'Admin' && <SystemMonitor />}
+          {view === 'audit' && (currentUser?.value.role === 'Admin' || can('users_manage')) && <AuditLog />}
 
           {view === 'users' && <>
             <div className="flex flex-wrap gap-3 items-end justify-between mb-4"><div><h1 className="text-[24px] font-extrabold flex items-center gap-2"><UserCog className="text-[var(--primary)]" /> ผู้ใช้</h1><p className="text-[13px] text-[var(--muted)]">เฉพาะผู้ดูแลระบบ — เพิ่ม แก้ไข ปิด-เปิดใช้งาน ลบ และรีเซ็ตรหัสผ่าน</p></div>
@@ -718,14 +773,14 @@ function AppInner() {
 
           {view === 'leads' && <>
             <div className="flex flex-wrap gap-3 items-end justify-between mb-4"><div><h1 className="text-[24px] font-extrabold">ลูกค้า</h1><p className="text-[13px] text-[var(--muted)]">ค้นหา กรอง และติดตามลูกค้าทุกคนในที่เดียว</p></div></div>
-            <div className="flex flex-col md:flex-row gap-2 mb-4"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาชื่อ เบอร์โทร ที่อยู่…" className={inputCls + ' pl-9 !rounded-full'} /></div><select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={inputCls + ' md:w-[180px] !rounded-full'}><option>ทั้งหมด</option>{STATUSES.map(s => <option key={s}>{s}</option>)}</select><select value={needFilter} onChange={e => setNeedFilter(e.target.value)} className={inputCls + ' md:w-[180px] !rounded-full'}><option>ทั้งหมด</option><option>ใช้เอง</option><option>ขายไฟ</option><option>ใช้เอง + ขายไฟ</option></select></div>
+            <div className="flex flex-col md:flex-row gap-2 mb-4"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาชื่อ เบอร์โทร ที่อยู่…" className={inputCls + ' pl-9 !rounded-full'} /></div><select value={statusFilter} onChange={e => { setGroupFilter('ทั้งหมด'); setStatusFilter(e.target.value); }} className={inputCls + ' md:w-[180px] !rounded-full'}><option>ทั้งหมด</option>{STATUSES.map(s => <option key={s}>{s}</option>)}</select><select value={needFilter} onChange={e => setNeedFilter(e.target.value)} className={inputCls + ' md:w-[180px] !rounded-full'}><option>ทั้งหมด</option><option>ใช้เอง</option><option>ขายไฟ</option><option>ใช้เอง + ขายไฟ</option></select></div>
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">{filtered.map(r => { const v = r.value; const t = calcTotal(v); return (<article key={r.id} className="bg-[var(--surface)] rounded-3xl border p-4 flex flex-col gap-2"><div className="flex justify-between gap-2"><div className="flex gap-3 min-w-0"><div className="w-11 h-11 rounded-2xl bg-blue-100 flex items-center justify-center font-bold text-blue-700 shrink-0">{String(v.customer || '').replace('คุณ', '').trim().charAt(0)}</div><div className="min-w-0"><div className="font-bold truncate">{v.customer}</div><div className="text-[12px] text-[var(--muted)] flex gap-1"><Phone size={12} />{v.phone} • {v.line}</div></div></div><span className="text-[11px] font-bold px-2 py-1 rounded-full h-fit shrink-0" style={{ background: STATUS_COLOR[v.status] }}>{v.status}</span></div><p className="text-[13px] text-[var(--muted)] flex gap-1"><MapPin size={14} className="shrink-0 mt-0.5" />{v.address}</p>{v.customerNote && <p className="text-[12px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-2.5 py-2">{v.customerNote}</p>}<div className="flex flex-wrap gap-1.5 text-[11px]"><span className="bg-gray-100 px-2 py-1 rounded-full">{v.building}</span><span className="bg-gray-100 px-2 py-1 rounded-full">{v.need}</span><span className="bg-gray-100 px-2 py-1 rounded-full">{v.kw || '—'} kW</span><span className="bg-gray-100 px-2 py-1 rounded-full">ค่าไฟ {fmtBaht(v.bill)}/ด.</span></div><div className="flex justify-between items-center mt-auto pt-2 border-t"><span className="font-extrabold text-[var(--primary)]">{fmtBaht(t.total)}</span><div className="flex gap-1"><button onClick={() => setDetailId(r.id)} className="p-2 rounded-full bg-gray-100" aria-label="ดูรายละเอียด"><Eye size={16} /></button>{can('customers_edit') ? <button onClick={() => { try { setForm(v); setEditing(r); setShowAdd(true); } catch { /* ignore */ } }} className="p-2 rounded-full bg-blue-100" aria-label="แก้ไข"><Pencil size={16} /></button> : <button disabled className="p-2 rounded-full bg-gray-100 text-gray-300" aria-label="แก้ไข"><Pencil size={16} /></button>}{can('customers_delete') ? <button onClick={() => deleteJob(r.id)} className="p-2 rounded-full bg-red-50 text-red-600" aria-label="ลบ"><Trash2 size={16} /></button> : <button disabled className="p-2 rounded-full bg-gray-100 text-gray-300" aria-label="ลบ"><Trash2 size={16} /></button>}</div></div></article>); })}{filtered.length === 0 && <div className="col-span-full text-center py-12 text-[var(--muted)] bg-[var(--surface)] rounded-3xl border">ไม่พบลูกค้าตามเงื่อนไขที่ค้นหา</div>}</div>
           </>}
 
           {view === 'orders' && <>
             <h1 className="text-[24px] font-extrabold">ออเดอร์ / งานติดตั้ง</h1><p className="text-[13px] text-[var(--muted)] mb-4">กดที่การ์ดเพื่อเปิดรายละเอียด</p>
-            <div className="flex flex-wrap gap-2 mb-3"><button onClick={() => setStatusFilter('ทั้งหมด')} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold ${statusFilter === 'ทั้งหมด' ? 'bg-[var(--primary)] text-white' : 'bg-white border'}`}>ทั้งหมด ({records.length})</button>{STATUSES.map(s => <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold ${statusFilter === s ? 'bg-[var(--primary)] text-white' : jobs.some(j => j.status === s) ? 'bg-white border' : 'bg-white/60 border text-gray-400'}`}>{s} ({jobs.filter(j => j.status === s).length})</button>)}</div>
-            <div className="flex gap-3 overflow-x-auto kanban-scroll pb-3 -mx-1 px-1">{STATUSES.filter(s => statusFilter === 'ทั้งหมด' || s === statusFilter).map(s => { const list = filtered.filter(r => r.value.status === s); return <div key={s} className="w-[280px] shrink-0 bg-[var(--surface2)] rounded-3xl border p-3"><div className="flex justify-between items-center mb-3 px-1"><span className="font-bold text-[14px]">{s}</span><span className="bg-white px-2 py-0.5 rounded-full text-[12px] font-bold">{list.length}</span></div><div className="space-y-2">{list.map(r => { const v = r.value; return (<div key={r.id} className="bg-[var(--surface)] rounded-2xl border p-3 shadow-sm"><div className="font-bold text-[14px] truncate">{v.customer}</div><div className="text-[12px] text-[var(--muted)] truncate">{v.address}</div><div className="flex justify-between mt-2 text-[12px]"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-bold">{v.kw || '—'} kW • {v.panels} แผง</span><span className="font-extrabold">{fmtBaht(calcTotal(v).total)}</span></div><div className="flex gap-1 mt-2"><button onClick={() => setDetailId(r.id)} className="flex-1 bg-[var(--dark)] text-white py-1.5 rounded-full text-[12px] font-semibold">เปิดงาน</button><select disabled={!can('orders_change_status')} value={v.status} onChange={e => updateJob(r.id, { status: e.target.value as Status }, { require: 'orders_change_status' })} className="flex-1 text-[12px] border rounded-full px-2 py-1.5 bg-white disabled:bg-gray-100"><option disabled>ย้ายสถานะ</option>{STATUSES.map(x => <option key={x}>{x}</option>)}</select></div></div>); })}{list.length === 0 && <p className="text-[12px] text-center text-[var(--muted)] py-4">ยังไม่มีงานในขั้นตอนนี้</p>}</div></div>; })}</div>
+            <div className="flex flex-wrap gap-2 mb-2"><button onClick={() => { setGroupFilter('ทั้งหมด'); setStatusFilter('ทั้งหมด'); }} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold ${groupFilter === 'ทั้งหมด' ? 'bg-[var(--primary)] text-white' : 'bg-white border'}`}>ทั้งหมด ({records.length})</button>{STATUS_GROUPS.map(g => { const n = jobs.filter(j => g.statuses.includes(j.status)).length; return <button key={g.name} onClick={() => { setGroupFilter(g.name); setStatusFilter('ทั้งหมด'); }} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold ${groupFilter === g.name ? 'bg-[var(--primary)] text-white' : n ? 'bg-white border' : 'bg-white/60 border text-gray-400'}`}>{g.name} ({n})</button>; })}</div>{groupFilter !== 'ทั้งหมด' && <div className="flex flex-wrap gap-2 mb-3 pl-3 border-l-2 border-[var(--primary)]"><button onClick={() => setStatusFilter('ทั้งหมด')} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold !text-[12px] ${statusFilter === 'ทั้งหมด' ? 'bg-[var(--navy)] text-white' : 'bg-white border'}`}>ทุกสถานะในกลุ่ม</button>{(STATUS_GROUPS.find(g => g.name === groupFilter)?.statuses || []).map(s => { const n = jobs.filter(j => j.status === s).length; return <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1.5 rounded-full text-[13px] whitespace-nowrap font-semibold !text-[12px] ${statusFilter === s ? 'bg-[var(--navy)] text-white' : n ? 'bg-white border' : 'bg-white/60 border text-gray-400'}`}>{s} ({n})</button>; })}</div>}
+            <div className="flex gap-3 overflow-x-auto kanban-scroll pb-3 -mx-1 px-1">{STATUSES.filter(s => (statusFilter === 'ทั้งหมด' || s === statusFilter) && inGroup(s)).map(s => { const list = filtered.filter(r => r.value.status === s); return <div key={s} className="w-[280px] shrink-0 bg-[var(--surface2)] rounded-3xl border p-3"><div className="flex justify-between items-center mb-3 px-1"><span className="font-bold text-[14px]">{s}</span><span className="bg-white px-2 py-0.5 rounded-full text-[12px] font-bold">{list.length}</span></div><div className="space-y-2">{list.map(r => { const v = r.value; return (<div key={r.id} className="bg-[var(--surface)] rounded-2xl border p-3 shadow-sm"><div className="font-bold text-[14px] truncate">{v.customer}</div><div className="text-[12px] text-[var(--muted)] truncate">{v.address}</div><div className="flex justify-between mt-2 text-[12px]"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-bold">{v.kw || '—'} kW • {v.panels} แผง</span><span className="font-extrabold">{fmtBaht(calcTotal(v).total)}</span></div><div className="flex gap-1 mt-2"><button onClick={() => setDetailId(r.id)} className="flex-1 bg-[var(--dark)] text-white py-1.5 rounded-full text-[12px] font-semibold">เปิดงาน</button><select disabled={!can('orders_change_status')} value={v.status} onChange={e => updateJob(r.id, { status: e.target.value as Status }, { require: 'orders_change_status' })} className="flex-1 text-[12px] border rounded-full px-2 py-1.5 bg-white disabled:bg-gray-100"><option disabled>ย้ายสถานะ</option>{STATUSES.map(x => <option key={x}>{x}</option>)}</select></div></div>); })}{list.length === 0 && <p className="text-[12px] text-center text-[var(--muted)] py-4">ยังไม่มีงานในขั้นตอนนี้</p>}</div></div>; })}</div>
           </>}
 
           {view === 'quotes' && <>
@@ -735,8 +790,8 @@ function AppInner() {
           </>}
 
           {view === 'finance' && <>
-            <h1 className="text-[24px] font-extrabold">การเงิน</h1><p className="text-[13px] text-[var(--muted)] mb-4">มัดจำ 30% / ติดตั้ง 40% / ส่งมอบ 30% — ปรับ % ได้ตามตกลง</p>
-            <div className="grid lg:grid-cols-2 gap-3">{records.map(r => { const v = r.value; const pays = paymentAmounts(v); const paid = pays.filter(p => p.status === 'ยืนยันแล้ว').reduce((s, p) => s + p.amount, 0); const remain = pays.reduce((s, p) => s + p.amount, 0) - paid; return (<div key={r.id} className="bg-[var(--surface)] rounded-3xl border p-4"><div className="flex justify-between gap-2"><div><div className="font-bold">{v.customer}</div><div className="text-[12px] text-[var(--muted)]">ยอดรวม {fmtBaht(calcTotal(v).total)} • ชำระแล้ว {fmtBaht(paid)}</div></div><span className={`px-2 py-1 rounded-full text-[11px] font-bold h-fit ${remain === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>ค้าง {fmtBaht(remain)}</span></div><div className="mt-3 space-y-2">{pays.map((p, idx) => (<div key={idx} className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-2xl p-2.5"><div className="flex-1 min-w-[150px]"><div className="text-[13px] font-semibold">{p.label}</div><div className="text-[12px] text-gray-500">{fmtBaht(p.amount)} • กำหนด {p.due || '—'}</div></div><input type="number" disabled={!can('finance_edit_installments')} value={p.pct} min={0} max={100} onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], pct: Number(e.target.value) }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} className="w-[64px] px-2 py-1.5 rounded-lg border text-[13px] disabled:bg-gray-100" /><span className="text-[12px]">%</span><select disabled={!can('finance_confirm')} value={p.status} onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], status: e.target.value as any }; updateJob(r.id, { payments: next }, { require: 'finance_confirm' }); }} className="px-2 py-1.5 rounded-lg border text-[13px] bg-white disabled:bg-gray-100"><option>ยังไม่โอน</option><option>โอนแล้ว</option><option>รอตรวจสอบ</option><option>ยืนยันแล้ว</option></select><input disabled={!can('finance_edit_installments')} value={p.slip} placeholder="ลิงก์สลิป" onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], slip: e.target.value }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} className="flex-1 min-w-[120px] px-2 py-1.5 rounded-lg border text-[13px] bg-white disabled:bg-gray-100" /><UploadBtn folder="slips" label="แนบสลิป" disabled={!can('finance_edit_installments')} onError={m => setResult(m)} onUrl={url => { const next = [...v.payments]; next[idx] = { ...next[idx], slip: url }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} />{p.slip && /^https?:\/\//.test(p.slip) && <a href={p.slip} target="_blank" rel="noreferrer" className="text-[12px] text-[var(--primary)] font-semibold underline">ดูสลิป</a>}</div>))}</div></div>); })}</div>
+            <div className="flex flex-wrap items-start justify-between gap-2"><div><h1 className="text-[24px] font-extrabold">การเงิน</h1><p className="text-[13px] text-[var(--muted)] mb-4">มัดจำ 30% / ติดตั้ง 40% / ส่งมอบ 30% — ปรับ % ได้ตามตกลง</p></div><button type="button" onClick={async () => { try { const { exportSalesExcel } = await import('@/lib/sales-export'); await exportSalesExcel(jobs, SOLD_STATUSES); } catch (e) { setResult('Export ไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e))); } }} className="px-4 py-2.5 rounded-full border bg-white text-[13px] font-bold flex items-center gap-1.5"><FileText size={15} />Export Excel</button></div>
+            <div className="grid lg:grid-cols-2 gap-3">{records.map(r => { const v = r.value; const pays = paymentAmounts(v); const paid = pays.filter(p => p.status === 'ยืนยันแล้ว').reduce((s, p) => s + p.amount, 0); const remain = pays.reduce((s, p) => s + p.amount, 0) - paid; return (<div key={r.id} className="bg-[var(--surface)] rounded-3xl border p-4"><div className="flex justify-between gap-2"><div><div className="font-bold">{v.customer}</div><div className="text-[12px] text-[var(--muted)]">ยอดรวม {fmtBaht(calcTotal(v).total)} • ชำระแล้ว {fmtBaht(paid)}</div></div><span className={`px-2 py-1 rounded-full text-[11px] font-bold h-fit ${remain === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>ค้าง {fmtBaht(remain)}</span></div><div className="mt-3 space-y-2">{pays.map((p, idx) => (<div key={idx} className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-2xl p-2.5"><div className="flex-1 min-w-[150px]"><div className="text-[13px] font-semibold">{p.label}</div><div className="text-[12px] text-gray-500">{fmtBaht(p.amount)} • กำหนด {p.due || '—'}</div></div><input type="number" disabled={!can('finance_edit_installments')} value={p.pct} min={0} max={100} onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], pct: Number(e.target.value) }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} className="w-[64px] px-2 py-1.5 rounded-lg border text-[13px] disabled:bg-gray-100" /><span className="text-[12px]">%</span><select disabled={!can('finance_confirm')} value={p.status} onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], status: e.target.value as any }; updateJob(r.id, { payments: next }, { require: 'finance_confirm' }); }} className="px-2 py-1.5 rounded-lg border text-[13px] bg-white disabled:bg-gray-100"><option>ยังไม่โอน</option><option>โอนแล้ว</option><option>รอตรวจสอบ</option><option>ยืนยันแล้ว</option></select><input disabled={!can('finance_edit_installments')} value={p.slip} placeholder="ลิงก์สลิป" onChange={e => { const next = [...v.payments]; next[idx] = { ...next[idx], slip: e.target.value }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} className="flex-1 min-w-[120px] px-2 py-1.5 rounded-lg border text-[13px] bg-white disabled:bg-gray-100" /><UploadBtn folder="slips" label="แนบสลิป" disabled={!can('finance_edit_installments')} onError={m => setResult(m)} onUrl={url => { const next = [...v.payments]; next[idx] = { ...next[idx], slip: url }; updateJob(r.id, { payments: next }, { require: 'finance_edit_installments' }); }} />{p.slip && /^https?:\/\//.test(p.slip) && <a href={p.slip} target="_blank" rel="noreferrer" className="text-[12px] text-[var(--primary)] font-semibold underline">ดูสลิป</a>}<ReceiptButton job={v} index={idx} company={company} quoteRef={v.quoteDocNo || quoteNoFor(r.id)} canIssue={can('finance_confirm')} onIssue={() => issueReceipt(r.id, idx)} onMessage={setResult} /></div>))}</div></div>); })}</div>
           </>}
 
           {view === 'electric' && <>
@@ -808,7 +863,10 @@ function AppInner() {
       )}
 
       {quoteRec && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setQuoteId(null)}><div className="bg-white text-gray-900 w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl" onClick={e => e.stopPropagation()}><div className="p-5 sm:p-7"><div className="flex justify-end mb-2"><button onClick={() => setQuoteId(null)} className="p-2 bg-gray-100 rounded-full"><X size={18} /></button></div><QuoteWorkspace key={quoteRec.id} job={quoteRec.value} company={company} quoteNo={quoteNoFor(quoteRec.id)} onChange={patch => updateJob(quoteRec.id, patch)} canEdit={can('quotes_edit')} catalog={catalog} initialTab="pdf" history={buildHistory(records, quoteRec.id)} />{can('quotes_approve') ? <button onClick={() => { try { setResult('อนุมัติใบเสนอราคา QT-' + quoteRec.id.slice(-4).toUpperCase() + ' แล้ว'); setQuoteId(null); } catch { /* ignore */ } }} className="w-full mt-2 py-3 rounded-full bg-emerald-600 text-white font-bold flex justify-center gap-2"><CheckCircle2 size={18} /> อนุมัติใบเสนอราคา</button> : <p className="text-center text-[12px] text-gray-400 mt-2">ปุ่มอนุมัติต้องใช้สิทธิ์ “อนุมัติ” ใบเสนอราคา</p>}</div></div></div>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setQuoteId(null)}><div className="bg-white text-gray-900 w-full max-w-[820px] max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl" onClick={e => e.stopPropagation()}><div className="p-5 sm:p-7"><div className="flex justify-end mb-2"><button onClick={() => setQuoteId(null)} className="p-2 bg-gray-100 rounded-full"><X size={18} /></button></div><QuoteWorkspace key={quoteRec.id} job={quoteRec.value} company={company} quoteNo={quoteNoFor(quoteRec.id)} onChange={patch => updateJob(quoteRec.id, patch)} canEdit={can('quotes_edit') && !quoteRec.value.quoteApproval} catalog={catalog} initialTab="pdf" history={buildHistory(records, quoteRec.id)} />{quoteRec.value.quoteApproval && <div className="mt-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[13px] flex gap-2 items-center"><CheckCircle2 size={18} className="shrink-0" /><span>อนุมัติแล้วโดย <b>{quoteRec.value.quoteApproval.by}</b> เมื่อ {safe(() => new Date(quoteRec.value.quoteApproval!.at).toLocaleString('th-TH'), quoteRec.value.quoteApproval.at)} • ราคาถูกล็อก แก้ไขไม่ได้จนกว่าจะยกเลิกการอนุมัติ</span></div>}{can('quotes_approve') ? (quoteRec.value.quoteApproval
+          ? <button onClick={() => { void approveQuote(quoteRec.id, false); }} className="w-full mt-2 py-3 rounded-full border-2 border-gray-300 text-gray-700 font-bold flex justify-center gap-2"><X size={18} /> ยกเลิกการอนุมัติ (เพื่อแก้ไขราคา)</button>
+          : <button onClick={() => { void approveQuote(quoteRec.id, true); }} className="w-full mt-2 py-3 rounded-full bg-emerald-600 text-white font-bold flex justify-center gap-2"><CheckCircle2 size={18} /> อนุมัติใบเสนอราคา</button>)
+          : <p className="text-center text-[12px] text-gray-400 mt-2">{quoteRec.value.quoteApproval ? 'ใบเสนอราคานี้อนุมัติแล้ว' : 'ปุ่มอนุมัติต้องใช้สิทธิ์ “อนุมัติ” ใบเสนอราคา'}</p>}</div></div></div>
       )}
     </div>
     </MotionConfig>
@@ -1019,4 +1077,48 @@ function QuoteEditor({ job, onChange, onOpenQuote, catalog, canEdit, history }: 
     <div className="grid sm:grid-cols-2 gap-3 mt-3"><div><label className={labelE}>ค่าแรงติดตั้ง</label><input type="number" disabled={!canEdit} value={job.labor} onChange={e => onChange({ labor: Number(e.target.value) })} className={inputE} /></div><div><label className={labelE}>ส่วนลดรวม</label><input type="number" disabled={!canEdit} value={job.discount} onChange={e => onChange({ discount: Number(e.target.value) })} className={inputE} /></div></div>
     <button type="button" onClick={onOpenQuote} className="w-full mt-4 bg-[var(--dark)] text-white py-3 rounded-full font-bold text-[13px]">ดูตัวอย่าง PDF</button>
   </div>;
+}
+
+// ---------- Receipt / tax invoice for one confirmed installment (same A4 renderer as the quotation) ----------
+function ReceiptButton({ job, index, company, quoteRef, canIssue, onIssue, onMessage }: { job: Job; index: number; company: CompanySettings; quoteRef: string; canIssue: boolean; onIssue: () => Promise<Receipt | null>; onMessage: (m: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const p = job.payments?.[index];
+  if (!p || (p.status !== 'ยืนยันแล้ว' && !p.receipt)) return null;
+  if (!p.receipt && !canIssue) return null;
+
+  async function download(rc: Receipt) {
+    const [{ renderQuotePages, fmt2 }, { buildQuotePdf }] = await Promise.all([import('@/lib/quote-render'), import('@/lib/quote-pdf')]);
+    const seller = resolveSeller(company);
+    const data: QuoteData = {
+      seller: { name: seller.name, address: seller.address, taxId: seller.taxId, phone: seller.phone, email: seller.email },
+      doc: { docNo: rc.no, issueDate: rc.date, acceptDate: '', validUntil: '', ref: quoteRef },
+      cust: resolveCustomer(job), back: resolveContactBack(job),
+      rows: [{ name: `ค่างวด ${p!.label} (${p!.pct}% ของมูลค่างานตามใบเสนอราคา ${quoteRef})`, qty: 1, price: rc.net, discount: 0, vatPct: 7, net: rc.net, details: [job.kw ? `งานติดตั้งระบบโซลาร์เซลล์ ${job.kw} kW` : 'งานติดตั้งระบบโซลาร์เซลล์'], groups: [] }],
+      notes: [], payments: [], bank: SPEC_BANK,
+      summary: { net: rc.net, vat: rc.vat, total: rc.amount },
+      title: 'ใบเสร็จรับเงิน / ใบกำกับภาษี',
+      meta: [['เลขที่ :', rc.no], ['วันที่ :', rc.date], ['อ้างอิง :', quoteRef], ['งวด :', p!.label.split('•')[0].trim()], ['ผู้รับเงิน :', rc.by]],
+      paidLines: [`ได้รับชำระเงินแล้ว ${fmt2(rc.amount)} บาท`, `โอนเข้าบัญชี ${SPEC_BANK.bank} ${SPEC_BANK.no}`, SPEC_BANK.name],
+      signatures: ['ผู้รับเงิน', 'ผู้มีอำนาจลงนาม', 'ตราประทับ (ผู้ขาย)', 'ผู้ชำระเงิน (ลูกค้า)'],
+    };
+    const { bytes } = await buildQuotePdf(await renderQuotePages(data), []);
+    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
+    const a = document.createElement('a'); a.href = url; a.download = `BGE-ใบเสร็จ-${rc.no}.pdf`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
+  async function click() {
+    setBusy(true);
+    try {
+      const rc = p!.receipt || await onIssue();
+      if (rc) { await download(rc); onMessage(`ดาวน์โหลดใบเสร็จ ${rc.no} แล้ว`); }
+    } catch (e) { onMessage('สร้าง PDF ไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e))); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <button type="button" onClick={click} disabled={busy} title={p.receipt ? `ใบเสร็จ ${p.receipt.no} ออกเมื่อ ${p.receipt.date} โดย ${p.receipt.by}` : 'ออกเลขที่ใบเสร็จและดาวน์โหลด PDF'} className={`px-3 py-1.5 rounded-full text-[12px] font-bold flex items-center gap-1 disabled:opacity-50 ${p.receipt ? 'bg-white border border-emerald-600 text-emerald-700' : 'bg-emerald-600 text-white'}`}>
+      <FileText size={13} />{busy ? 'กำลังสร้าง…' : p.receipt ? p.receipt.no : 'ออกใบเสร็จ / ใบกำกับภาษี'}
+    </button>
+  );
 }

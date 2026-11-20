@@ -14,6 +14,11 @@ export type QuoteData = {
   summary: { net: number; vat: number; total: number };
   payments: { label: string; pct: number }[];
   bank: { bank: string; type: string; no: string; name: string };
+  /** Defaults draw a quotation; a receipt / tax invoice overrides the title, header fields, payment block and signature captions. */
+  title?: string;
+  meta?: [string, string][];
+  paidLines?: string[];
+  signatures?: [string, string, string, string];
 };
 
 const W = 595, H = 842, M = 32, SCALE = 2;
@@ -102,7 +107,8 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
     ctx = c.getContext('2d')!; ctx.scale(SCALE, SCALE); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
     pages.push(c);
     if (logo) { const s = 74; ctx.drawImage(logo, M - 8, 8, s, s); }
-    text('ใบเสนอราคา', W - M, 78, { size: 34, weight: 600, color: ACCENT, align: 'right' });
+    const title = d.title || 'ใบเสนอราคา';
+    text(title, W - M, 78, { size: title.length > 12 ? 22 : 34, weight: 600, color: ACCENT, align: 'right' });
     // seller / customer block
     let yy = 102;
     const labelX = M, valX = M + 44;
@@ -121,7 +127,7 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
     text('โทร', 262, cy0, { color: MUTED, size: 9 }); fit(d.cust.phone || '-', 284, cy0, 402);
     // right column: meta box + back contact
     rrect(414, 96, W - M - 414, 82, 8, BAND);
-    const meta: [string, string][] = [['เลขที่เอกสาร :', d.doc.docNo], ['วันที่ออก :', d.doc.issueDate], ['วันที่ตอบรับ :', d.doc.acceptDate || '-'], ['ใช้ได้ถึง :', d.doc.validUntil], ['อ้างอิง :', d.doc.ref || '-']];
+    const meta: [string, string][] = d.meta || [['เลขที่เอกสาร :', d.doc.docNo], ['วันที่ออก :', d.doc.issueDate], ['วันที่ตอบรับ :', d.doc.acceptDate || '-'], ['ใช้ได้ถึง :', d.doc.validUntil], ['อ้างอิง :', d.doc.ref || '-']];
     meta.forEach(([k, v], i) => { text(k, 420, 112 + i * 14.5, { weight: 700, size: 9 }); text(v, 482, 112 + i * 14.5, { size: 9 }); });
     text('ติดต่อกลับที่ :', 412, 200, { weight: 700, size: 9.5 });
     text(d.back.name || '-', 412, 215, { size: 9.5 }); text(d.back.phone || '-', 412, 229, { size: 9.5 }); text(d.back.email || '-', 412, 243, { size: 9.5 });
@@ -198,16 +204,18 @@ export async function renderQuotePages(d: QuoteData): Promise<HTMLCanvasElement[
   text('จำนวนเงินที่ชำระ', 470, fy + 64, { weight: 600, align: 'right', size: 9.5 }); text(`${fmt2(d.summary.total)} บาท`, W - M - 4, fy + 64, { align: 'right', size: 9.5 });
   fy += 76; hline(fy); fy += 14;
   text('ชำระเงิน', M + 4, fy + 4, { weight: 700 });
-  text(`${d.bank.bank}`, 92, fy + 4, { color: '#374151' }); text(`${d.bank.type} ${d.bank.no}`, 92, fy + 20, { weight: 700 }); text(d.bank.name, 92, fy + 36, { color: '#374151' });
+  if (d.paidLines) d.paidLines.slice(0, 3).forEach((l, i) => text(l, 92, fy + 4 + i * 16, { color: '#374151', weight: i === 0 ? 700 : 400 }));
+  else { text(`${d.bank.bank}`, 92, fy + 4, { color: '#374151' }); text(`${d.bank.type} ${d.bank.no}`, 92, fy + 20, { weight: 700 }); text(d.bank.name, 92, fy + 36, { color: '#374151' }); }
   fy += 46; hline(fy); fy += 14;
   text('หมายเหตุ', M + 4, fy + 4, { weight: 700 });
-  text('เงื่อนไขการชำระเงิน', 92, fy + 4, { color: '#374151' });
+  if (d.payments.length) text('เงื่อนไขการชำระเงิน', 92, fy + 4, { color: '#374151' });
   d.payments.forEach((p, i) => text(`(${i + 1}) ${p.label} ชำระ ${p.pct}%`, 92, fy + 19 + i * 13, { color: '#374151' }));
   let ry = fy + 19 + d.payments.length * 13 + 4;
   remarkLines.forEach(l => { text(l, 92, ry + 6, { size: 9.5, color: '#374151' }); ry += 12.5; });
   fy += 24 + d.payments.length * 13 + (remarkLines.length ? remarkLines.length * 12.5 + 8 : 0); hline(fy); fy += 14;
   text('รับรอง', M + 4, fy + 4, { weight: 700 });
-  const cols = [{ t: 'ผู้ออกเอกสาร (ผู้ขาย)', x: 130 }, { t: 'ผู้อนุมัติเอกสาร (ผู้ขาย)', x: 232 }, { t: 'ตราประทับ (ผู้ขาย)', x: 338 }, { t: 'ผู้รับเอกสาร (ลูกค้า)', x: 428 }];
+  const sig = d.signatures || ['ผู้ออกเอกสาร (ผู้ขาย)', 'ผู้อนุมัติเอกสาร (ผู้ขาย)', 'ตราประทับ (ผู้ขาย)', 'ผู้รับเอกสาร (ลูกค้า)'];
+  const cols = [{ t: sig[0], x: 130 }, { t: sig[1], x: 232 }, { t: sig[2], x: 338 }, { t: sig[3], x: 428 }];
   cols.forEach(c => text(c.t, c.x, fy + 4, { weight: 600, size: 8.5 }));
   const sigY = fy + 62;
   [130, 232, 428].forEach(x => { ctx.setLineDash([3, 2]); hline(sigY, x, x + 86, '#9CA3AF'); ctx.setLineDash([]); });

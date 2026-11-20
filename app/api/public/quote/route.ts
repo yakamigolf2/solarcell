@@ -2,6 +2,8 @@ import { and, eq, gt, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getDb, schema } from '@/db';
 import { JOBS } from '@/lib/auth';
+import { recordError } from '@/lib/errors';
+import { adminUrl, notifyLine } from '@/lib/notify';
 
 const r = schema.records;
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max) : '');
@@ -27,9 +29,11 @@ export async function POST(req: Request) {
       items: [], labor: 0, discount: 0, contacts: [], noteHistory: [], sitePhotos: [], status: 'ลีดใหม่', created: new Date().toISOString().slice(0, 10), customerNote: note ? `[จากเว็บไซต์] ${note}` : '[จากเว็บไซต์] ขอใบเสนอราคา',
     };
     await getDb().insert(r).values({ collection: JOBS, value });
+    await notifyLine(`🆕 ลีดใหม่จากเว็บไซต์\n${name} ${phone}\n${value.address || ''}\nค่าไฟ ${bill.toLocaleString('th-TH')} บาท/เดือน\n${note ? note.slice(0, 200) + '\n' : ''}${adminUrl()}`);
     return NextResponse.json({ data: { ok: true } });
   } catch (e) {
     console.error('public quote failed', e);
+    await recordError({ message: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '', source: 'server', url: '/api/public/quote' });
     return NextResponse.json({ error: 'ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่' }, { status: 500 });
   }
 }

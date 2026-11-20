@@ -49,7 +49,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             <div className="md:col-span-2">
               <Brand light />
               <p className="mt-4 text-[14px] text-white/70 max-w-sm leading-relaxed">ออกแบบ ติดตั้ง และดูแลระบบ Solar Cell ครบวงจร สำหรับบ้าน อาคาร และโรงงาน</p>
-              <p className="mt-3 text-[12px] text-white/50">{COMPANY.legal} • {COMPANY.legalEn}<br />เลขประจำตัวผู้เสียภาษี {COMPANY.taxId}</p>
+              <p className="mt-3 text-[12px] text-white/50">{COMPANY.legal} • {COMPANY.legalEn}</p>
             </div>
             <div><h3 className="font-semibold mb-3">เมนู</h3><ul className="text-[14px] text-white/75">{NAV.map(n => <li key={n.href}><Link href={n.href} className="inline-block py-2 hover:text-white">{n.label}</Link></li>)}<li><Link href="/quote" className="inline-block py-2 hover:text-white">ขอใบเสนอราคา</Link></li></ul></div>
             <div><h3 className="font-semibold mb-3">ติดต่อเรา</h3><ul className="space-y-3 text-[14px] text-white/75">

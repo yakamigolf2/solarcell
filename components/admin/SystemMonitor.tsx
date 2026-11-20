@@ -1,12 +1,14 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Cpu, Database, HardDrive, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Archive, Cpu, Database, HardDrive, RefreshCw } from 'lucide-react';
 
 type Part<T> = { ok: true; data: T } | { ok: false; error: string };
 type Db = { bytes: number; limitBytes: number; connections: number; cacheHitPct: number | null; collections: { name: string; rows: number; bytes: number }[] };
 type Cpu = { available: false; reason: string } | { available: true; cpuSeconds: number; computeHours: number; activeHours: number; limitHours: number; storageBytes: number | null; periodStart: string | null; periodEnd: string | null };
 type Blob = { bytes: number; files: number; limitBytes: number; folders: { name: string; files: number; bytes: number }[] };
-type Data = { checkedAt: string; db: Part<Db>; cpu: Part<Cpu>; blob: Part<Blob> };
+type Err = { last24h: number; items: { fingerprint: string; message: string; source: string; url: string; user: string; lastAt: string; count: number; stack: string }[] };
+type Bk = { configured: boolean; cron: boolean; line: boolean; count: number; latest: { at: string; size: number } | null; items: { at: string; size: number; pathname: string }[] };
+type Data = { checkedAt: string; db: Part<Db>; cpu: Part<Cpu>; blob: Part<Blob>; errors: Part<Err>; backups: Part<Bk> };
 
 const fmtBytes = (b: number) => {
   if (b < 1024) return `${b} B`;
@@ -67,6 +69,17 @@ export default function SystemMonitor() {
     } catch (e) { setError(e instanceof Error ? e.message : 'โหลดไม่สำเร็จ'); } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
+  const [backupMsg, setBackupMsg] = useState('');
+  const backupNow = async () => {
+    setBackupMsg('กำลังสำรองข้อมูล…');
+    try {
+      const res = await fetch('/api/monitor/backup', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'ไม่สำเร็จ');
+      setBackupMsg(`สำรองข้อมูลแล้ว ${json.data.rows} รายการ (${fmtBytes(json.data.bytes)})`);
+      load();
+    } catch (e) { setBackupMsg('สำรองข้อมูลไม่สำเร็จ: ' + (e instanceof Error ? e.message : '')); }
+  };
 
   return (
     <div>
@@ -110,6 +123,39 @@ export default function SystemMonitor() {
               <Meter used={data.blob.data.bytes} limit={data.blob.data.limitBytes} label="พื้นที่ไฟล์ที่ใช้" />
               <Breakdown rows={data.blob.data.folders.map((f) => ({ name: f.name, a: `${fmtNum(f.files, 0)} ไฟล์`, b: fmtBytes(f.bytes) }))} />
             </> : <Failed msg={data.blob.error} />}
+          </Card>
+
+          <Card icon={<Archive size={18} className="text-amber-600" />} title="สำรองข้อมูล (Backup)">
+            {data.backups.ok ? <>
+              <Big value={data.backups.data.latest ? new Date(data.backups.data.latest.at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : 'ยังไม่มี'} sub={`ล่าสุด • เก็บไว้ ${data.backups.data.count} ชุด (30 วัน, เข้ารหัส AES-256)`} />
+              <ul className="text-[13px] space-y-1">
+                <li>{data.backups.data.configured ? '✅' : '⚠️'} คีย์เข้ารหัส (BACKUP_KEY)</li>
+                <li>{data.backups.data.cron ? '✅' : '⚠️'} สำรองอัตโนมัติทุกวัน 08:00 (CRON_SECRET)</li>
+                <li>{data.backups.data.line ? '✅' : '⚠️'} แจ้งเตือน LINE (LINE_CHANNEL_ACCESS_TOKEN, LINE_TO)</li>
+              </ul>
+              <button onClick={backupNow} disabled={!data.backups.data.configured} className="self-start px-4 py-2 rounded-full bg-[var(--primary)] text-white text-[13px] font-bold disabled:opacity-50">สำรองข้อมูลตอนนี้</button>
+              {backupMsg && <p className="text-[13px] text-gray-600">{backupMsg}</p>}
+              {data.backups.data.items.length > 0 && <details className="text-[13px]"><summary className="cursor-pointer font-semibold">ดาวน์โหลดไฟล์สำรอง (ถอดรหัสแล้ว)</summary>
+                <p className="text-[12px] text-amber-700 my-1">ไฟล์มีข้อมูลลูกค้าและรหัสผ่านที่เข้ารหัสแล้ว เก็บในที่ปลอดภัย</p>
+                <ul className="space-y-1">{data.backups.data.items.map((b) => <li key={b.pathname}><a className="text-[var(--primary)] underline" href={`/api/monitor/backup?pathname=${encodeURIComponent(b.pathname)}`}>{new Date(b.at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}</a> <span className="text-gray-500">({fmtBytes(b.size)})</span></li>)}</ul>
+              </details>}
+            </> : <Failed msg={data.backups.error} />}
+          </Card>
+
+          <Card icon={<AlertTriangle size={18} className="text-rose-600" />} title="ข้อผิดพลาดของระบบ">
+            {data.errors.ok ? <>
+              <Big value={fmtNum(data.errors.data.last24h, 0)} sub="ครั้งใน 24 ชั่วโมงที่ผ่านมา" />
+              {data.errors.data.items.length === 0 ? <p className="text-[13px] text-emerald-700">ไม่มีข้อผิดพลาด</p> : (
+                <ul className="space-y-2 max-h-[260px] overflow-y-auto">
+                  {data.errors.data.items.map((e) => (
+                    <li key={e.fingerprint + e.lastAt} className="text-[12px] border-t pt-2">
+                      <div className="font-semibold text-rose-700 break-words">{e.message}</div>
+                      <div className="text-gray-500">{e.source} • {e.url || '—'} • {e.count} ครั้ง • ล่าสุด {new Date(e.lastAt).toLocaleString('th-TH')}{e.user ? ` • ${e.user}` : ''}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </> : <Failed msg={data.errors.error} />}
           </Card>
         </div>
       )}

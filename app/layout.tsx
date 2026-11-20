@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Prompt } from 'next/font/google';
 import './globals.css';
+import ErrorReporter from '@/components/ErrorReporter';
 
 const prompt = Prompt({ subsets: ['thai', 'latin'], weight: ['300', '400', '500', '600', '700', '800'], variable: '--font-prompt', display: 'swap' });
 
@@ -13,7 +14,7 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, them
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="th" className={prompt.variable}>
-      <body>{children}</body>
+      <body><ErrorReporter />{children}</body>
     </html>
   );
 }
