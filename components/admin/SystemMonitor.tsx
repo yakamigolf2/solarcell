@@ -97,7 +97,7 @@ export default function SystemMonitor() {
                 <Big value={`${fmtNum(data.cpu.data.computeHours, 2)} ชม.`} sub={`Compute hours จากลิมิต ${fmtNum(data.cpu.data.limitHours, 0)} ชม. / เดือน`} />
                 <Meter used={data.cpu.data.computeHours} limit={data.cpu.data.limitHours} label="Compute ที่ใช้ในรอบนี้" />
                 <div className="text-[13px] text-gray-600 space-y-1">
-                  <div>CPU time {fmtNum(data.cpu.data.cpuSeconds / 3600, 2)} ชม. • Active {fmtNum(data.cpu.data.activeHours, 2)} ชม.</div>
+                  <div>{data.cpu.data.cpuSeconds > 0 && `CPU time ${fmtNum(data.cpu.data.cpuSeconds / 3600, 2)} ชม. • `}Active {fmtNum(data.cpu.data.activeHours, 2)} ชม.</div>
                   {data.cpu.data.storageBytes !== null && <div>พื้นที่รวมตาม Neon {fmtBytes(data.cpu.data.storageBytes)}</div>}
                   <div>รอบการใช้งาน {fmtDate(data.cpu.data.periodStart)} – {fmtDate(data.cpu.data.periodEnd)}</div>
                 </div>
