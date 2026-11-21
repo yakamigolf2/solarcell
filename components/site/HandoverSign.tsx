@@ -49,7 +49,7 @@ export default function HandoverSign({ token, items }: { token: string; items: {
       <label className="flex gap-2 items-start"><input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-1" /><span>ข้าพเจ้าได้ตรวจรับงานติดตั้งระบบโซลาร์เซลล์ตามรายการข้างต้นครบถ้วน ระบบทำงานปกติ และได้รับคำแนะนำการใช้งานแล้ว</span></label>
       <label className="block"><span className="text-[13px] text-[var(--muted)]">ชื่อผู้รับมอบงาน</span><input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border" placeholder="ชื่อ-นามสกุล" autoComplete="name" /></label>
       <div>
-        <div className="flex justify-between items-center mb-1"><span className="text-[13px] text-[var(--muted)]">ลายเซ็น</span><button type="button" onClick={clear} className="text-[12px] font-bold text-[var(--primary)]">ล้างลายเซ็น</button></div>
+        <div className="flex justify-between items-center mb-1"><span className="text-[13px] text-[var(--muted)]">ลายเซ็น</span><button type="button" onClick={clear} className="px-2 py-1.5 -my-1 text-[12px] font-bold text-[var(--primary)]">ล้างลายเซ็น</button></div>
         <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} className="w-full h-[180px] rounded-xl border-2 border-dashed bg-gray-50 touch-none" aria-label="ช่องเซ็นชื่อ ใช้นิ้วหรือเมาส์เซ็น" />
       </div>
       {msg && <p role="status" className={`text-[13px] font-semibold ${msg.ok ? 'text-emerald-700' : 'text-rose-600'}`}>{msg.text}</p>}

@@ -78,7 +78,7 @@ export default async function Home() {
         <section id="products" className="max-w-[1200px] mx-auto px-5 pt-28">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <SectionTitle eyebrow="Products" title="อุปกรณ์คุณภาพในทุกระบบ" text="แผงโซลาร์ อินเวอร์เตอร์ แบตเตอรี่ และอุปกรณ์ประกอบ เลือกรุ่นให้เหมาะกับงบประมาณและหน้างาน" />
-            <Link href="/solutions" className="mb-10 text-[14px] font-semibold text-[var(--navy)] hover:text-[var(--emerald)]">ดูรายละเอียดทั้งหมด →</Link>
+            <Link href="/solutions" className="mb-10 inline-block py-2 text-[14px] font-semibold text-[var(--navy)] hover:text-[var(--emerald)]">ดูรายละเอียดทั้งหมด →</Link>
           </div>
           <Reveal><ProductsShowcase items={products} /></Reveal>
         </section>)}
@@ -123,8 +123,8 @@ export default async function Home() {
             <h2 className="mt-3 text-[34px] sm:text-[46px] font-bold leading-[1.1] tracking-tight">Let&apos;s Build a Smarter Energy Future.</h2>
             <p className="mt-4 text-white/75 text-[16px] leading-relaxed">Get Your Free Solar Consultation — ทีมงานจะติดต่อกลับเพื่อนัดสำรวจหน้างานและเสนอราคาที่เหมาะสม</p>
             <ul className="mt-8 space-y-3 text-[15px]">
-              <li><a href={COMPANY.phoneHref} className="flex items-center gap-3 hover:text-[var(--energy)]"><Phone size={18} />{COMPANY.phone}</a></li>
-              <li><a href={`mailto:${COMPANY.email}`} className="flex items-center gap-3 hover:text-[var(--energy)] break-all"><Mail size={18} className="shrink-0" />{COMPANY.email}</a></li>
+              <li><a href={COMPANY.phoneHref} className="flex items-center gap-3 py-1.5 hover:text-[var(--energy)]"><Phone size={18} />{COMPANY.phone}</a></li>
+              <li><a href={`mailto:${COMPANY.email}`} className="flex items-center gap-3 py-1.5 hover:text-[var(--energy)] break-all"><Mail size={18} className="shrink-0" />{COMPANY.email}</a></li>
               <li className="flex gap-3 text-white/80"><MapPin size={18} className="shrink-0 mt-0.5" />{COMPANY.address}</li>
             </ul>
           </Reveal>

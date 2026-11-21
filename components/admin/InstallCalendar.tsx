@@ -17,6 +17,7 @@ export default function InstallCalendar({ jobs, staff, waitingStatuses, onOpen }
   const today = ymd(new Date());
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [tech, setTech] = useState('all');
+  const [picked, setPicked] = useState(today); // phones: the day whose jobs are listed under the grid
   const techs = staff.filter((s) => s.role === 'Technician');
   const color = (id?: string) => (id ? COLORS[Math.max(0, techs.findIndex((t) => t.id === id)) % COLORS.length] : '#64748B');
 
@@ -68,9 +69,11 @@ export default function InstallCalendar({ jobs, staff, waitingStatuses, onOpen }
           const other = d.getMonth() !== month.getMonth();
           const free = tech !== 'all' && tech !== 'none' && list.length === 0 && !other && key >= today;
           return (
-            <div key={key} className={`min-h-[86px] rounded-xl border p-1 ${other ? 'opacity-40' : ''} ${free ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--surface)]'} ${key === today ? 'ring-2 ring-[var(--primary)]' : ''}`}>
+            <div key={key} onClick={() => setPicked(key)} className={`min-h-[52px] sm:min-h-[86px] rounded-xl border p-1 cursor-pointer sm:cursor-default ${other ? 'opacity-40' : ''} ${free ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--surface)]'} ${key === today ? 'ring-2 ring-[var(--primary)]' : ''} ${key === picked ? 'max-sm:border-[var(--navy)] max-sm:border-2' : ''}`}>
               <div className="text-right text-[11px] font-bold text-gray-500">{d.getDate()}</div>
-              <div className="space-y-0.5">
+              {/* phones: a dot per job; the list for the tapped day is shown under the grid */}
+              <div className="sm:hidden flex flex-wrap gap-0.5 justify-center mt-1" aria-hidden>{list.slice(0, 6).map((j) => <span key={j.id + key} className="w-2 h-2 rounded-full" style={{ background: color(j.techId) }} />)}</div>
+              <div className="hidden sm:block space-y-0.5">
                 {list.slice(0, 4).map((j) => (
                   <button key={j.id + key} type="button" onClick={() => onOpen(j.id)} title={`${j.customer} • ${j.techName || 'ยังไม่ระบุทีม'} • ${j.status}`} className="w-full text-left truncate rounded px-1 py-0.5 text-white text-[11px] font-semibold" style={{ background: color(j.techId) }}>{j.customer}</button>
                 ))}
@@ -80,6 +83,13 @@ export default function InstallCalendar({ jobs, staff, waitingStatuses, onOpen }
           );
         })}
       </div>
+
+      <section className="sm:hidden mt-3" aria-live="polite">
+        <h2 className="font-bold mb-2 text-[14px]">งานวันที่ {Number(picked.slice(8))} {TH_MONTH[Number(picked.slice(5, 7)) - 1]}</h2>
+        {visible(byDay[picked] || []).length === 0
+          ? <p className="text-[13px] text-[var(--muted)]">ไม่มีงานติดตั้ง</p>
+          : <div className="space-y-2">{visible(byDay[picked] || []).map((j) => <button key={j.id} type="button" onClick={() => onOpen(j.id)} className="w-full text-left bg-[var(--surface)] border rounded-2xl p-3 flex gap-3 items-center"><span className="w-3 h-3 rounded-full shrink-0" style={{ background: color(j.techId) }} /><span className="min-w-0"><span className="block font-bold text-[14px] truncate">{j.customer}</span><span className="block text-[12px] text-[var(--muted)] truncate">{j.techName || 'ยังไม่ระบุทีม'} • {j.status}</span></span></button>)}</div>}
+      </section>
 
       <section className="mt-5">
         <h2 className="font-bold mb-2">ยังไม่ได้นัดวันติดตั้ง ({unscheduled.length})</h2>

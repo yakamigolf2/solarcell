@@ -14,8 +14,8 @@ export default function Contact() {
         <Reveal className="lg:col-span-2 glass rounded-[28px] p-6 space-y-5 self-start">
           <div className="font-bold text-[var(--navy)]">{COMPANY.legal}</div>
           <div className="flex gap-3 text-[14.5px]"><MapPin className="text-[var(--primary)] shrink-0" size={20} />{COMPANY.address}</div>
-          <a href={COMPANY.phoneHref} className="flex gap-3 text-[14.5px] hover:underline"><Phone className="text-[var(--primary)] shrink-0" size={20} />{COMPANY.phone}</a>
-          <a href={`mailto:${COMPANY.email}`} className="flex gap-3 text-[14.5px] hover:underline break-all"><Mail className="text-[var(--primary)] shrink-0" size={20} />{COMPANY.email}</a>
+          <a href={COMPANY.phoneHref} className="flex gap-3 py-1.5 text-[14.5px] hover:underline"><Phone className="text-[var(--primary)] shrink-0" size={20} />{COMPANY.phone}</a>
+          <a href={`mailto:${COMPANY.email}`} className="flex gap-3 py-1.5 text-[14.5px] hover:underline break-all"><Mail className="text-[var(--primary)] shrink-0" size={20} />{COMPANY.email}</a>
         </Reveal>
         <Reveal className="lg:col-span-3"><QuoteForm /></Reveal>
       </div>

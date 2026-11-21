@@ -54,8 +54,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             <div><h3 className="font-semibold mb-3">เมนู</h3><ul className="text-[14px] text-white/75">{NAV.map(n => <li key={n.href}><Link href={n.href} className="inline-block py-2 hover:text-white">{n.label}</Link></li>)}<li><Link href="/quote" className="inline-block py-2 hover:text-white">ขอใบเสนอราคา</Link></li></ul></div>
             <div><h3 className="font-semibold mb-3">ติดต่อเรา</h3><ul className="space-y-3 text-[14px] text-white/75">
               <li className="flex gap-2"><MapPin size={16} className="shrink-0 mt-0.5" />{COMPANY.address}</li>
-              <li className="flex gap-2"><Phone size={16} className="shrink-0 mt-0.5" /><a href={COMPANY.phoneHref} className="hover:text-white">{COMPANY.phone}</a></li>
-              <li className="flex gap-2"><Mail size={16} className="shrink-0 mt-0.5" /><a href={`mailto:${COMPANY.email}`} className="hover:text-white break-all">{COMPANY.email}</a></li></ul></div>
+              <li className="flex gap-2"><Phone size={16} className="shrink-0 mt-0.5" /><a href={COMPANY.phoneHref} className="inline-block py-1 hover:text-white">{COMPANY.phone}</a></li>
+              <li className="flex gap-2"><Mail size={16} className="shrink-0 mt-0.5" /><a href={`mailto:${COMPANY.email}`} className="inline-block py-1 hover:text-white break-all">{COMPANY.email}</a></li></ul></div>
           </div>
           <div className="border-t border-white/10 py-5 text-center text-[12px] text-white/50">© {new Date().getFullYear()} {COMPANY.legalEn}</div>
         </footer>

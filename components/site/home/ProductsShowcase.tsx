@@ -22,7 +22,7 @@ export default function ProductsShowcase({ items }: { items: ProductItem[] }) {
               {specs.length > 0 && <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[13px]">{specs.map(([k, v]) => <div key={k}><dt className="text-[11px] uppercase tracking-wide text-[var(--muted)]">{k}</dt><dd className="font-medium text-[var(--navy)]">{v}</dd></div>)}</dl>}
               <ul className="mt-3 space-y-1.5 text-[13.5px] text-[var(--muted)] leading-relaxed">{p.points.slice(0, 3).map(pt => <li key={pt} className="flex gap-2"><span className="mt-2 w-1.5 h-1.5 rounded-full bg-[var(--energy)] shrink-0" />{pt}</li>)}</ul>
               {p.price && <div className="mt-4 text-[15px] font-semibold text-[var(--navy)]">{p.price}</div>}
-              <Link href="/quote" className="mt-5 inline-flex items-center gap-1.5 self-start text-[14px] font-semibold text-[var(--navy)] hover:text-[var(--emerald)] transition">Request a Quote <ArrowRight size={15} /></Link>
+              <Link href="/quote" className="mt-5 inline-flex items-center gap-1.5 self-start py-2 text-[14px] font-semibold text-[var(--navy)] hover:text-[var(--emerald)] transition">Request a Quote <ArrowRight size={15} /></Link>
             </div>
           </article>);
       })}

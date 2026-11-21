@@ -30,7 +30,7 @@ export function DashboardSkeleton() {
   return (
     <div aria-busy="true" className="space-y-4">
       <div className="skeleton h-14 w-72" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[0, 1, 2, 3].map(i => <div key={i} className="skeleton h-28" />)}</div>
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-4 gap-4">{[0, 1, 2, 3].map(i => <div key={i} className="skeleton h-28" />)}</div>
       <div className="grid lg:grid-cols-3 gap-4"><div className="skeleton h-72" /><div className="skeleton h-72" /><div className="skeleton h-72" /></div>
     </div>
   );
@@ -45,7 +45,7 @@ export default function Dashboard({ d, onOpen, onNav }: { d: DashData; onOpen: (
         <div><h1 className="text-[22px] sm:text-[26px] font-bold leading-tight">สวัสดี, {d.greetingName} 👋</h1><p className="text-[13px] text-[var(--muted)]">ภาพรวมการดำเนินงานของบริษัท • {d.roleLabel}</p></div>
       </motion.div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {d.kpis.map(k => { const t = TONES[k.tone]; return (
           <motion.div key={k.key} variants={item} className="lift relative overflow-hidden rounded-3xl glass p-4 sm:p-5">
             <div className={`absolute -right-6 -bottom-8 w-32 h-32 rounded-full bg-gradient-to-t ${t.glow} to-transparent blur-xl`} aria-hidden />
@@ -97,7 +97,7 @@ export default function Dashboard({ d, onOpen, onNav }: { d: DashData; onOpen: (
         </motion.section>
 
         <motion.section variants={item} className="lg:col-span-4 rounded-3xl glass p-5">
-          <div className="flex justify-between items-center mb-2"><h3 className="font-bold">รายการล่าสุด</h3><button onClick={() => onNav('orders')} className="text-[12px] font-semibold text-[var(--primary)] inline-flex items-center gap-1 hover:underline">ดูทั้งหมด <ArrowRight size={13} /></button></div>
+          <div className="flex justify-between items-center mb-2"><h3 className="font-bold">รายการล่าสุด</h3><button onClick={() => onNav('orders')} className="px-2 py-1.5 -my-1 text-[12px] font-semibold text-[var(--primary)] inline-flex items-center gap-1 hover:underline">ดูทั้งหมด <ArrowRight size={13} /></button></div>
           {d.recent.length === 0 ? <div className="text-center py-10 text-[13px] text-[var(--muted)]"><Sun className="mx-auto mb-2 text-amber-300" />ยังไม่มีรายการ</div> :
             <ul className="space-y-1">{d.recent.map(r => (
               <li key={r.id}><button onClick={() => onOpen(r.id)} className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-white/70 text-left transition">

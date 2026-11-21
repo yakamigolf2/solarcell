@@ -45,7 +45,7 @@ export default function Calculator() {
           <div>
             <label htmlFor="bill" className="text-[13px] text-[var(--muted)]">ค่าไฟเฉลี่ยต่อเดือน</label>
             <div className="text-[34px] font-bold text-[var(--navy)] leading-none mt-1">{baht(bill)}</div>
-            <input id="bill" type="range" min={1000} max={200000} step={500} value={bill} onChange={e => setBill(Number(e.target.value))} className="w-full mt-2 accent-[#3F8A2F]" />
+            <input id="bill" type="range" min={1000} max={200000} step={500} value={bill} onChange={e => setBill(Number(e.target.value))} className="w-full mt-2 h-7 accent-[#3F8A2F] cursor-pointer" />
             <div className="flex justify-between text-[11px] text-[var(--muted)]"><span>฿1,000</span><span>฿200,000</span></div>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
